@@ -20,6 +20,10 @@ These people are the lifeblood of what we do - and to keep moving forward, we ne
 ## Repository Purpose
 This codebase is the React front-end of https://github.com/ciejer/tangata_local, which includes a compiled version of this application - to run, follow the instructions there.
 
+## To Build / Run
+`npm run` compiles the app for testing, pointing at a server on localhost:80
+`npm test` compiles the app to the /build folder, to be copied into a tāngata_local installation.
+
 ## I have an idea!
 
 Please log all feedback in the GitHub Issues on https://github.com/ciejer/tangata_local, where it will be triaged across the projects - your feedback is crucial to make this a useful tool for the community.
