@@ -11,7 +11,6 @@ export default function Config(props) {
   const [dbtMethod, setdbtMethod] = useState('LiveDB');
   const [dbtAccounts, setdbtAccounts] = useState({});
   const [dbtDocsJobs, setdbtDocsJobs] = useState({});
-  const [license, setLicense] = useState({});
   const sshKeyRef = useRef(null);
   const dbtCloudKey = useRef(null);
   const dbtAccountRef = useRef(null);
@@ -162,25 +161,8 @@ export default function Config(props) {
         </Form.Group>);
     } else return null;
   }
-  
-
-  const getLicense = () => {
-    fetch('/license.md', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/text',
-        'Content-Type': 'application/text',
-      }
-    })
-    .then(response=> response.text())
-    .then(resText => {
-      setLicense(resText);
-    });
-}
-getLicense();
 
   if(props.appState === "Config") {
-    console.log(license);
     return (
       <div className="container mt-3">
         <h1>Config</h1>
@@ -404,9 +386,6 @@ getLicense();
                 {dbtDocsJobsSelect()}
               </div>
             </Form>
-          </Tab>
-          <Tab eventKey="license" title="License" className="border-right border-left border-bottom p-3">
-            <ReactMarkdown children={license} />
           </Tab>
           {/* <Tab eventKey="password" title="Change Password" className="border-right border-left border-bottom p-3">
           <Form>
