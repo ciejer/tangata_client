@@ -1,70 +1,25 @@
-# Getting Started with Create React App
+# tāngata_client
+>“Hutia te rito o te harakeke  
+Kei whea to kōmako e kō?  
+Ki mai ki ahau  
+He aha te mea nui o te Ao?  
+Maku e kī atu,  
+he tāngata, he tāngata, he tāngata..."
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+If the heart of the harakeke *(flax plant)* was removed,  
+where would the bellbird sing?  
+If I was asked what was the most important thing in the world  
+I would be compelled to reply,  
+it is people, it is people, it is people.  
+*Ngaroto*
 
-## Available Scripts
+In te ao Māori (the Māori world view), Tāngata (*TAHNG-uh-tuh*) describes something much larger than an addressed group of people: it describes *whakapapa*, the surrounding network of ancestors and descendants we are connected to.  
+With this work we intend to follow these principles to put our people first: not just the data & analytics engineers, but those around our workplaces that know the deep details of how our businesses actually run.  
+These people are the lifeblood of what we do - and to keep moving forward, we need their context far more than ever.
 
-In the project directory, you can run:
+## Repository Purpose
+This codebase is the React front-end of https://github.com/ciejer/tangata_local, which includes a compiled version of this application - to run, follow the instructions there.
 
-### `npm start`
+## I have an idea!
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Please log all feedback in the GitHub Issues on https://github.com/ciejer/tangata_local, where it will be triaged across the projects - your feedback is crucial to make this a useful tool for the community.
