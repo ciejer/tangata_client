@@ -109,11 +109,6 @@ class Catalog extends Component {
         // console.log(gitRepo);
       }
     const fileCommits = () => this.props.catalogModel.all_commits.map((value,index) => {
-      var gitLink = null;
-      if(gitRepo !== null) {
-        gitLink = gitRepo + 'commit/' + value.hash;
-        // console.log(gitLink);
-      }
       return(
         <tr key={"catalogFileCommit "+index} title={value.hash}>
           <td title={value.authorDate}>
@@ -123,7 +118,7 @@ class Catalog extends Component {
             {value.authorName}
           </td>
           <td>
-            <a href={this.gitLink !== null?gitLink:null} target="_blank">
+            <a href={value.originURL !== null?value.originURL:null} target="_blank">
               {value.subject}
             </a>
           </td>
