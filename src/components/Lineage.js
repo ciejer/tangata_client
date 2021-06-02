@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useCallback } from 'react';
+import { Container, Overlay, Table } from 'react-bootstrap';
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -10,7 +11,6 @@ import ReactFlow, {
   useZoomPanHelper
 } from 'react-flow-renderer';
 import dagre from 'dagre';
-
 
 // import './layouting.css';
 
@@ -61,6 +61,7 @@ const getLayoutedElements = (elements, direction = 'LR') => {
 
 
 const LayoutFlow = (props) => {
+  const [contextMenu, setContextMenu] = useState({"x":null,"y":null,"display":false});
 //   const { fitView } = useZoomPanHelper();
 // console.log("LayoutFlow");  
 // console.log(props.lineageArray);
@@ -73,8 +74,43 @@ const LayoutFlow = (props) => {
     event.preventDefault();
     // console.log(event);
     // console.log(node.id);
-    props.selectModel(node.id);
+    setContextMenu({"x":event.pageX,"y":event.pageY,"display":true,"target": event.target, "nodeID": node.id});
+    // addToSelect(node.id);
   }
+  const addToSelect = (selectToAdd) => {
+    // props.selectModel(selectToAdd);
+    props.openContextMenu(false);
+  };
+
+  const contextMenuDisplay = (contextMenu) => {
+    console.log(contextMenu.display);
+    if(contextMenu.display === false) return null;
+    // console.log("Displaying Context Menu");
+    // console.log(contextMenu);
+
+    // console.log(contextMenu.target.firstChild.data);
+    // console.log(contextMenu.target);
+    // console.log(JSON.parse(contextMenu.target.dataset.selectvalue));
+    // console.log(contextMenu.target.dataset.selectvalue.model);
+    return(
+      <div>
+        <Overlay target={contextMenu.target} show={contextMenu.display} placement="right-start">
+          <div style={{zIndex:1050}}>
+            <Table bordered variant="dark">
+              <tbody>
+                <tr>
+                  <td onClick={() => props.selectModel(contextMenu.nodeID)}>
+                    Open Model in Current Tab
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </div>
+        </Overlay>
+      </div>
+    )
+  }
+
   return (
     <div className="layoutflow lineagebox">
       <ReactFlowProvider>
@@ -87,6 +123,7 @@ const LayoutFlow = (props) => {
             <MiniMap />
         </ReactFlow>
       </ReactFlowProvider>
+      {contextMenuDisplay(contextMenu)}
     </div>
   );
 };

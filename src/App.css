@@ -218,7 +218,31 @@ html, body, #root, #root>div {
   }
 }
 
-[contenteditable=true]:empty:before {
-  content: attr(placeholder);
-  color: #aaa;
+[contenteditable=true] {
+  background-color: rgba(0,0,0,.03);
+  border-radius: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border:rgba(0,0,0,.08);
+  border-width: 0.5px;
+  border-style: solid;
+}
+
+div:hover[contenteditable="true"] {
+  background-color: rgba(0,0,0,.08);
+  color: teal;
+}
+
+[contenteditable=true]:hover:empty:before {
+  background-color: rgba(0,0,0,.08);
+  color: teal;
+}
+
+div.lineage_model_node {
+  background-color: #F36D6D;
+  border-color: #800000;
+}
+div.lineage_source_node {
+  background-color: #3DCCCC;
+  border-color: teal;
 }
