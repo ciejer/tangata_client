@@ -1,10 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { Overlay, Popover, Navbar, Nav } from 'react-bootstrap'; 
 import { getModelSearch } from '../services/getModelSearch';
+import { useHistory } from 'react-router-dom';
 const reactState = process.env.NODE_ENV;
-export const NavBar = ({addModel, logState, openSQLPanel, openModelBuilder, openCatalog, openConfig, appState, contextMenuOpen, openContextMenu, selectModel, user, setUser, userConfig, setUserConfig}) => {
+export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModelBuilder, openCatalog, openConfig, appState, contextMenuOpen, openContextMenu, selectModel, user, setUser, userConfig, setUserConfig}) => {
     const [searchDropdown, setSearchDropdown] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+    let history = useHistory();
     const debugLogState = (reactState) => {
         if ( reactState === 'development') {
             return(
@@ -12,6 +14,21 @@ export const NavBar = ({addModel, logState, openSQLPanel, openModelBuilder, open
                 );
         } else return null;
     }
+    const logoutButton = (hostVersion, userConfig) => {
+        if ( hostVersion === 'node') {
+            return(
+                <div className="nav-item nav-link mr-sm-2" role="button" onClick={() => logout()}>Logout {userConfig.firstname}</div>
+                );
+        } else return null;
+    }
+    const submitChanges = (hostVersion, createPR) => {
+        if ( hostVersion === 'node') {
+            return(
+                <div className="nav-item nav-link mr-sm-2" role="button" onClick={() => createPR()}>Submit changes</div>
+                );
+        } else return null;
+    }
+
     const searchBox = useRef(null);
 
     if(contextMenuOpen === false && searchDropdown===true) { //add this to every other component that has context menus
@@ -25,8 +42,9 @@ export const NavBar = ({addModel, logState, openSQLPanel, openModelBuilder, open
         openContextMenu(false);
         setSearchDropdown(false);
         e.stopPropagation();
-        selectModel(searchResults[index].nodeID);
-        openCatalog();
+        // selectModel(searchResults[index].nodeID);
+        // openCatalog();
+        history.push("/catalog/"+searchResults[index].nodeID);
     }
 
     const toggleSearchDropdown = (newValue) => {
@@ -182,7 +200,7 @@ export const NavBar = ({addModel, logState, openSQLPanel, openModelBuilder, open
         setUserConfig({});
         sessionStorage.removeItem("userconfig");
     }
-
+    // console.log(history);
     return(
     <Navbar className="navbar-dark bg-brand position-fixed w-100 z-100" expand="lg">
         <Navbar.Brand href="/">TĀNGATA</Navbar.Brand>
@@ -190,8 +208,8 @@ export const NavBar = ({addModel, logState, openSQLPanel, openModelBuilder, open
         <Navbar.Toggle aria-controls="navbarContent"/>
         <Navbar.Collapse id="navbarContent" className="justify-content-between">
             <div className="navbar-nav p-2 bg-brand">
-                <div className={"nav-item nav-link bg-brand "+(appState==="Catalog"?"active":null)} role="button" onClick={() => openCatalog()}>Catalog</div>
-                <div className={"nav-item nav-link bg-brand "+(appState==="Config"?"active":null)} role="button" onClick={() => openConfig()}>Config</div>
+                <div className={"nav-item nav-link bg-brand "+(history.location.pathname.includes("/catalog")?"active":null)} role="button" onClick={() => history.push("/catalog")}>Catalog</div>
+                <div className={"nav-item nav-link bg-brand "+(history.location.pathname.includes("/config")?"active":null)} role="button" onClick={() => history.push("/config")}>Config</div>
             </div>
             <div className="navbar-nav p2">
                 <form className="form-inline">
@@ -201,10 +219,10 @@ export const NavBar = ({addModel, logState, openSQLPanel, openModelBuilder, open
             </div>
             <div className="navbar-nav p-2">
                 <div className={"nav-item nav-link mr-sm-2"+(userConfig.dbtmethod!=="UploadMetadata"?null:" d-none")} role="button" onClick={() => reloadDBT()}>Refresh dbt_ catalog</div>
-                <div className="nav-item nav-link mr-sm-2" role="button" onClick={() => createPR()}>Submit changes</div>
+                {submitChanges(hostVersion, createPR)}
                 {/* <div className="nav-item nav-link mr-sm-2" role="button" onClick={() => openSQLPanel()}>Open SQL Panel </div> */}
                 {debugLogState(reactState)}
-                <div className="nav-item nav-link mr-sm-2" role="button" onClick={() => logout()}>Logout {userConfig.firstname}</div>
+                {logoutButton(hostVersion, userConfig)}
             {/* <a class="nav-item nav-link active" href="#">Home <span class="sr-only">(current)</span></a>
             <a class="nav-item nav-link" href="#">Features</a>
             <a class="nav-item nav-link" href="#">Pricing</a>

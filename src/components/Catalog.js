@@ -3,28 +3,40 @@ import {Container, Tabs, Tab, Accordion, Card, Button, Modal } from 'react-boots
 import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import  LayoutFlow  from './Lineage';
-import ContentEditable from 'react-contenteditable'
+import { getModel } from '../services/getModel';
+import ContentEditable from 'react-contenteditable';
+import { useHistory } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useParams,
+  useRouteMatch
+} from "react-router-dom";
 
-class Catalog extends Component {
-
-  catalogDescription = () => {
-    if(this.props.catalogModel.description) {
-      return this.props.catalogModel.description;
+export default function Catalog (props) {
+  let history = useHistory();
+  const [catalogModel, setCatalogModel] = useState({});
+  let { path, url } = useRouteMatch();
+  function catalogDescription()  {
+    if(catalogModel.description) {
+      return catalogModel.description;
     } else {
       return null;
     };
   }
 
-  catalogDependsOn = () => {
-    // console.log("this.props.catalogModel.depends_on");
-    // console.log(this.props.catalogModel.depends_on);
+  function catalogDependsOn() {
+    // console.log("catalogModel.depends_on");
+    // console.log(catalogModel.depends_on);
 
     const ancestorModels = () => {
-      if(!this.props.catalogModel.depends_on) return null;
+      if(!catalogModel.depends_on) return null;
       // console.log("found ancestors");
-      return this.props.catalogModel.depends_on.nodes.map((value,index) => {
+      return catalogModel.depends_on.nodes.map((value,index) => {
         // console.log(value);
-        var ancestorClickEvent = (e) => {e.preventDefault(); this.props.selectModel(value);};
+        var ancestorClickEvent = (e) => {e.preventDefault(); history.push("/catalog/"+value);};
         return(
           <div key={"catalogDependsOnModel"+index} title={value}>
             {index===0?(<b>Models:<br/></b>):null}
@@ -34,8 +46,8 @@ class Catalog extends Component {
       });
     }
     const ancestorMacros = () => {
-      if(!this.props.catalogModel.depends_on) return null;
-      return this.props.catalogModel.depends_on.macros.map((value,index) => {
+      if(!catalogModel.depends_on) return null;
+      return catalogModel.depends_on.macros.map((value,index) => {
         return(
           <div key={"catalogDependsOnMacro"+index} title={value}>
             {index===0?(<b>Macros:<br/></b>):null}
@@ -52,12 +64,12 @@ class Catalog extends Component {
     )
   }
 
-  catalogDependencies = () => {
-    // console.log("this.props.catalogModel.referenced_by");
-    // console.log(this.props.catalogModel.referenced_by);
+  function catalogDependencies() {
+    // console.log("catalogModel.referenced_by");
+    // console.log(catalogModel.referenced_by);
 
-    const dependentModels = () => this.props.catalogModel.referenced_by.map((value,index) => {
-      var dependentClickEvent = (e) => {e.preventDefault(); this.props.selectModel(value);};
+    const dependentModels = () => catalogModel.referenced_by.map((value,index) => {
+      var dependentClickEvent = (e) => {e.preventDefault(); history.push("/catalog/"+value);};
       return(
         <div key={"catalogDependentModel"+index} title={value}>
           {index===0?(<b>Models:<br/></b>):null}
@@ -72,11 +84,11 @@ class Catalog extends Component {
     )
   }
 
-  nodeContributors = () => {
-    // console.log("this.props.catalogModel.referenced_by");
-    // console.log(this.props.catalogModel.referenced_by);
+  function nodeContributors() {
+    // console.log("catalogModel.referenced_by");
+    // console.log(catalogModel.referenced_by);
 
-    const nodeContributorMap = () => this.props.catalogModel.all_contributors.map((value,index) => {
+    const nodeContributorMap = () => catalogModel.all_contributors.map((value,index) => {
       return(
         <div key={"nodeContributor"+index} title={value}>
           {index===0?(<b>Contributors:<br/></b>):null}
@@ -85,7 +97,7 @@ class Catalog extends Component {
       )
     });
 
-    if(this.props.catalogModel.all_contributors.length > 1) {
+    if(catalogModel.all_contributors.length > 1) {
       return (
         <>
           {nodeContributorMap()}
@@ -98,17 +110,10 @@ class Catalog extends Component {
   }
 
 
-  nodeHistory = () => {
-    // console.log("this.props.catalogModel.referenced_by");
-    // console.log(this.props.catalogModel.referenced_by);
-    var gitRepo = null;
-      if(this.props.userConfig.dbtmethod === "LiveDB") {
-        let gitExtract = this.props.userConfig.gitrepo.match(/[^@]+@(github.com|gitlab.com):([^.]+).git/);
-        // console.log(gitExtract);
-        gitRepo = "http://"+gitExtract[1]+"/"+gitExtract[2]+"/";
-        // console.log(gitRepo);
-      }
-    const fileCommits = () => this.props.catalogModel.all_commits.map((value,index) => {
+  function nodeHistory() {
+    // console.log("catalogModel.referenced_by");
+    // console.log(catalogModel.referenced_by);
+    const fileCommits = () => catalogModel.all_commits.map((value,index) => {
       return(
         <tr key={"catalogFileCommit "+index} title={value.hash}>
           <td title={value.authorDate}>
@@ -151,10 +156,10 @@ class Catalog extends Component {
   
   
 
-  catalogColumns = () => {
+  function catalogColumns() {
 
     const columnRows = () => {
-      return Object.entries(this.props.catalogModel.columns).map((value,index) => {
+      return Object.entries(catalogModel.columns).map((value,index) => {
         const testList = (tests) => {
           // console.log(tests);
           return tests.map((key,testIndex) => {
@@ -186,7 +191,7 @@ class Catalog extends Component {
               
             <ContentEditable
                   html={value[1].description}
-                  onBlur={this.updateMetadataModel}
+                  onBlur={updateMetadataModel}
                   data-metadatafield="ColumnDescription"
                   data-columnName={value[0].toLowerCase()}
                   placeholder={"Add a description"}
@@ -199,7 +204,7 @@ class Catalog extends Component {
         );
       });
     }
-    if(Object.keys(this.props.catalogModel.columns).length > 0) { //if this has columns
+    if(Object.keys(catalogModel.columns).length > 0) { //if this has columns
       return(
         <div className="row mt-md-3">
           <div className="col">
@@ -238,22 +243,22 @@ class Catalog extends Component {
     };
   }
 
-  updateMetadataModel = (e) => {
+  function updateMetadataModel (e) {
     // console.log("updateMetadataModel");
     // console.log(e);
     // console.log(e.target.dataset.metadatafield);
     // console.log(e.target.innerText);
-    // console.log(this.props.catalogModel.yaml_path);
-    // console.log(this.props.catalogModel.model_path);
+    // console.log(catalogModel.yaml_path);
+    // console.log(catalogModel.model_path);
     var metadataBody = {};
     switch(e.target.dataset.metadatafield) {
       case "Description":
         metadataBody = {
           "updateMethod": "yamlModelProperty",
-          "yaml_path": this.props.catalogModel.yaml_path,
-          "model_path": this.props.catalogModel.model_path,
-          "model": this.props.catalogModel.name,
-          "node_id": this.props.catalogModel.nodeID,
+          "yaml_path": catalogModel.yaml_path,
+          "model_path": catalogModel.model_path,
+          "model": catalogModel.name,
+          "node_id": catalogModel.nodeID,
           "property_name": "description",
           "new_value": e.target.innerText
         }
@@ -265,10 +270,10 @@ class Catalog extends Component {
         }
         metadataBody = {
           "updateMethod": "yamlModelTags",
-          "yaml_path": this.props.catalogModel.yaml_path,
-          "model_path": this.props.catalogModel.model_path,
-          "model": this.props.catalogModel.name,
-          "node_id": this.props.catalogModel.nodeID,
+          "yaml_path": catalogModel.yaml_path,
+          "model_path": catalogModel.model_path,
+          "model": catalogModel.name,
+          "node_id": catalogModel.nodeID,
           "property_name": "tags",
           "new_value": e.target.innerText.split(',').map(function(item) { // Split tags by commas, and remove any spaces if any
               return item.trim();
@@ -278,10 +283,10 @@ class Catalog extends Component {
       case "ColumnDescription":
         metadataBody = {
           "updateMethod": "yamlModelColumnProperty",
-          "yaml_path": this.props.catalogModel.yaml_path,
-          "model_path": this.props.catalogModel.model_path,
-          "model": this.props.catalogModel.name,
-          "node_id": this.props.catalogModel.nodeID,
+          "yaml_path": catalogModel.yaml_path,
+          "model_path": catalogModel.model_path,
+          "model": catalogModel.name,
+          "node_id": catalogModel.nodeID,
           "column": e.target.dataset.columnname,
           "property_name": "description",
           "new_value": e.target.innerText
@@ -297,14 +302,14 @@ class Catalog extends Component {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.props.user.token,
+          'Authorization': 'Token ' + props.user.token,
         },
         body: JSON.stringify(metadataBody)
       });
     }
   }
 
-  lineageModal = (lineage, selectModel) => {
+  function lineageModal(lineage, selectModel) {
     function LineageModal(lineage) {
       const [show, setShow] = useState(false);
     
@@ -338,12 +343,12 @@ class Catalog extends Component {
     return <LineageModal lineage={lineage}/>
   }
 
-  showCreatedBy = () => {
-    if(this.props.catalogModel.model_type==="node" && this.props.catalogModel.created_by) { 
+  function showCreatedBy() {
+    if(catalogModel.model_type==="node" && catalogModel.created_by) { 
       return(
         <div className="row mt-md-3">
           <div className="col col-md-auto">
-            Created: {this.props.catalogModel.created_by + (this.props.catalogModel.created_relative_date?", "+this.props.catalogModel.created_relative_date:null)} 
+            Created: {catalogModel.created_by + (catalogModel.created_relative_date?", "+catalogModel.created_relative_date:null)} 
           </div>
         </div>
       );
@@ -351,158 +356,175 @@ class Catalog extends Component {
   
   }
 
-  render() {
-    if(this.props.appState !== "Catalog") return null;
-    if(Object.keys(this.props.catalogModel).length === 0) { //Default catalog screen
-      return (
-        <div>
-          Welcome to the Catalog. Search in the bar above to find models.
-        </div>
-      );
-    } else {
-      const tags = this.props.catalogModel.tags.length>0?this.props.catalogModel.tags.join(", "):null
-      return (
-          <Container className="catalogContainer display-block">
-            <div className="row justify-content-md-left">
-              <div className="col col-md-auto pr-md-3">
-                <h3 className="mb-md-0">{this.props.catalogModel.name.toLowerCase()}</h3>
-              </div>
-              <div className="col font-italic align-self-end pl-md-0">
-                {this.props.catalogModel.materialization}
-              </div>
-              <div className="col align-self-end pl-md-0 text-right">
-                tags: <i>
-                  <ContentEditable
-                    innerRef={this.tags}
-                    html={tags}
-                    onBlur={this.updateMetadataModel}
-                    data-metadatafield="Tags"
-                    placeholder={"Add comma-separated Tags"}
-                    style= {{display: "inline", minWidth: "100px"}}
-                  />
-                </i>
-              </div>
-            </div>
-            <div className="row justify-content-between pt-md-1">
-              <div className="col col-md-auto">
-                {this.props.catalogModel.database.toLowerCase()}.{this.props.catalogModel.schema.toLowerCase()}.{this.props.catalogModel.name.toLowerCase()}
-              </div>
-              <div className="col col-md-auto">
-                {this.props.catalogModel.row_count?Number(this.props.catalogModel.row_count).toLocaleString()+" rows":null}
-              </div>
-            </div>
-            {this.showCreatedBy()}
-            <div className="row mt-md-3">
-              <div className="col col-md-auto">
-                <ContentEditable
-                  innerRef={this.description}
-                  html={this.catalogDescription()}
-                  onBlur={this.updateMetadataModel}
-                  data-metadatafield="Description"
-                  placeholder={"Add a description"}
-                />
-              </div>
-            </div>
-            <div className="row mt-md-3">
-              <div className="col col-md-auto">
-                {this.lineageModal(this.props.catalogModel.lineage, this.props.selectModel)}
-              </div>
-            </div>
-            <Accordion className="mt-md-3" defaultActiveKey="0">
-              <Card>
-                <Card.Header>
-                  <Accordion.Toggle as={Button} variant="link" eventKey="0">
-                    Columns
-                  </Accordion.Toggle>
-                </Card.Header>
-                <Accordion.Collapse eventKey="0">
-                  <div className="container">
-                    {this.catalogColumns()}
-                  </div>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Card.Header>
-                  <Accordion.Toggle as={Button} variant="link" eventKey="1">
-                    SQL
-                  </Accordion.Toggle>
-                </Card.Header>
-                <Accordion.Collapse eventKey="1">
-                  <div className="container">
-                    <div className="row mt-md-3 mb-md-3">
-                      <div className="col col-md-auto">
-                        <Tabs defaultActiveKey="raw" id="uncontrolled-tab-example" className="ml-md-1">
-                          <Tab eventKey="raw" title="raw SQL" className="py-md-3 catalogSQL">
-                            {this.props.catalogModel.raw_sql}
-                          </Tab>
-                          <Tab eventKey="processed" title="processed SQL" className="py-md-3 catalogSQL">
-                            {this.props.catalogModel.compiled_sql}
-                          </Tab>
-                        </Tabs>
-                      </div>
-                    </div>
-                  </div>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Card.Header>
-                  <Accordion.Toggle as={Button} variant="link" eventKey="2">
-                    Code Change History
-                  </Accordion.Toggle>
-                </Card.Header>
-                <Accordion.Collapse eventKey="2">
-                  <div className="container">
-                    <div className="row mt-md-3 mb-md-3">
-                      <div className="col col-md-auto">
-                        {this.nodeContributors()}
-                      </div>
-                    </div>
-                    <div className="row mt-md-3 mb-md-3">
-                      <div className="col col-md-auto">
-                        {this.nodeHistory()}
-                      </div>
-                    </div>
-                  </div>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Card.Header>
-                  <Accordion.Toggle as={Button} variant="link" eventKey="3">
-                    Depends On
-                  </Accordion.Toggle>
-                </Card.Header>
-                <Accordion.Collapse eventKey="3">
-                  <div className="container">
-                    <div className="row mt-md-3 mb-md-3">
-                      <div className="col col-md-auto">
-                        {this.catalogDependsOn()}
-                      </div>
-                    </div>
-                  </div>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Card.Header>
-                  <Accordion.Toggle as={Button} variant="link" eventKey="4">
-                    Dependencies
-                  </Accordion.Toggle>
-                </Card.Header>
-                <Accordion.Collapse eventKey="4">
-                  <div className="container">
-                    <div className="row mt-md-3 mb-md-3">
-                      <div className="col col-md-auto">
-                        {this.catalogDependencies()}
-                      </div>
-                    </div>
-                  </div>
-                </Accordion.Collapse>
-              </Card>
-            </Accordion>
-          </Container>
-            
-      );
+  function CatalogPage() {
+    let { catalogPage } = useParams();
+    // console.log(catalogPage);
+    if(Object.keys(catalogModel).length === 0 || catalogModel.nodeID !== catalogPage) {
+      getModel(catalogPage, props.user)
+        .then(response => {
+          // console.log(response)
+          if(!response.error) {
+            setCatalogModel(response);
+          }
+        });
+      return(<></>);
     }
+    const tags = catalogModel.tags.length>0?catalogModel.tags.join(", "):null
+    return(
+      <Container className="catalogContainer display-block">
+        <div className="row justify-content-md-left">
+          <div className="col col-md-auto pr-md-3">
+            <h3 className="mb-md-0">{catalogModel.name.toLowerCase()}</h3>
+          </div>
+          <div className="col font-italic align-self-end pl-md-0">
+            {catalogModel.materialization}
+          </div>
+          <div className="col align-self-end pl-md-0 text-right">
+            tags: <i>
+              <ContentEditable
+                innerRef={tags}
+                html={tags}
+                onBlur={updateMetadataModel}
+                data-metadatafield="Tags"
+                placeholder={"Add comma-separated Tags"}
+                style= {{display: "inline", minWidth: "100px"}}
+              />
+            </i>
+          </div>
+        </div>
+        <div className="row justify-content-between pt-md-1">
+          <div className="col col-md-auto">
+            {catalogModel.database.toLowerCase()}.{catalogModel.schema.toLowerCase()}.{catalogModel.name.toLowerCase()}
+          </div>
+          <div className="col col-md-auto">
+            {catalogModel.row_count?Number(catalogModel.row_count).toLocaleString()+" rows":null}
+          </div>
+        </div>
+        {showCreatedBy()}
+        <div className="row mt-md-3">
+          <div className="col col-md-auto">
+            <ContentEditable
+              innerRef={catalogModel.description}
+              html={catalogDescription()}
+              onBlur={updateMetadataModel}
+              data-metadatafield="Description"
+              placeholder={"Add a description"}
+            />
+          </div>
+        </div>
+        <div className="row mt-md-3">
+          <div className="col col-md-auto">
+            {lineageModal(catalogModel.lineage, props.selectModel)}
+          </div>
+        </div>
+        <Accordion className="mt-md-3" defaultActiveKey="0">
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey="0">
+                Columns
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey="0">
+              <div className="container">
+                {catalogColumns()}
+              </div>
+            </Accordion.Collapse>
+          </Card>
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey="1">
+                SQL
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey="1">
+              <div className="container">
+                <div className="row mt-md-3 mb-md-3">
+                  <div className="col col-md-auto">
+                    <Tabs defaultActiveKey="raw" id="uncontrolled-tab-example" className="ml-md-1">
+                      <Tab eventKey="raw" title="raw SQL" className="py-md-3 catalogSQL">
+                        {catalogModel.raw_sql}
+                      </Tab>
+                      <Tab eventKey="processed" title="processed SQL" className="py-md-3 catalogSQL">
+                        {catalogModel.compiled_sql}
+                      </Tab>
+                    </Tabs>
+                  </div>
+                </div>
+              </div>
+            </Accordion.Collapse>
+          </Card>
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey="2">
+                Code Change History
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey="2">
+              <div className="container">
+                <div className="row mt-md-3 mb-md-3">
+                  <div className="col col-md-auto">
+                    {nodeContributors()}
+                  </div>
+                </div>
+                <div className="row mt-md-3 mb-md-3">
+                  <div className="col col-md-auto">
+                    {nodeHistory()}
+                  </div>
+                </div>
+              </div>
+            </Accordion.Collapse>
+          </Card>
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey="3">
+                Depends On
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey="3">
+              <div className="container">
+                <div className="row mt-md-3 mb-md-3">
+                  <div className="col col-md-auto">
+                    {catalogDependsOn()}
+                  </div>
+                </div>
+              </div>
+            </Accordion.Collapse>
+          </Card>
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey="4">
+                Dependencies
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey="4">
+              <div className="container">
+                <div className="row mt-md-3 mb-md-3">
+                  <div className="col col-md-auto">
+                    {catalogDependencies()}
+                  </div>
+                </div>
+              </div>
+            </Accordion.Collapse>
+          </Card>
+        </Accordion>
+      </Container>
+    )
   }
-}
+  
 
-export default Catalog;
+
+    return (
+      <Switch>
+        <Route exact path = {path}>
+          <div>
+            Welcome to the Catalog. Search in the bar above to find models.
+          </div>
+        </Route>
+        <Route path={`${path}/:catalogPage`}>
+          <CatalogPage/>
+        </Route>
+      </Switch>
+        
+          
+    );
+}

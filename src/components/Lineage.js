@@ -11,6 +11,7 @@ import ReactFlow, {
   useZoomPanHelper
 } from 'react-flow-renderer';
 import dagre from 'dagre';
+import { useHistory } from 'react-router-dom';
 
 // import './layouting.css';
 
@@ -61,6 +62,7 @@ const getLayoutedElements = (elements, direction = 'LR') => {
 
 
 const LayoutFlow = (props) => {
+  let history = useHistory();
   const [contextMenu, setContextMenu] = useState({"x":null,"y":null,"display":false});
 //   const { fitView } = useZoomPanHelper();
 // console.log("LayoutFlow");  
@@ -99,8 +101,13 @@ const LayoutFlow = (props) => {
             <Table bordered variant="dark">
               <tbody>
                 <tr>
-                  <td onClick={() => props.selectModel(contextMenu.nodeID)}>
+                  <td onClick={() => history.push("/catalog/"+contextMenu.nodeID)}>
                     Open Model in Current Tab
+                  </td>
+                </tr>
+                <tr>
+                  <td onClick={() => window.open('/catalog/'+contextMenu.nodeID)}>
+                    Open Model in New Tab
                   </td>
                 </tr>
               </tbody>

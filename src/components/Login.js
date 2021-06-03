@@ -6,6 +6,7 @@ import { postLoginUser } from "../services/postLoginUser";
 import { postRegisterUser } from "../services/postRegisterUser";
 import { refreshMetadata } from "../services/refreshMetadata";
 import { getUserConfig } from "../services/getUserConfig";
+import { useHistory } from 'react-router-dom';
 // import "./Login.css";
 
 export default function Login(props) {
@@ -13,6 +14,11 @@ export default function Login(props) {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  let history = useHistory();
+  if(props.hostVersion === 'python' || Object.keys(props.user).length > 0) {
+    // console.log(props.user);
+    history.push("/");
+  }
 
   function validateLoginForm() {
     return email.length > 0 && password.length > 0;
@@ -25,34 +31,33 @@ export default function Login(props) {
     event.preventDefault(); //stop the click catcher
     var loginBody = {"user": {"email": email, "password": password}};
     postLoginUser(loginBody)
-        .then(response => {
-            props.setUser(response);
-            sessionStorage.setItem("user", JSON.stringify(response));
-            refreshMetadata(response.user);
-            getUserConfig(response.user)
-                .then(response => {
-                    props.setUserConfig(response.user);
-                }
-            );
-        }
+      .then(response => {
+        props.setUser(response);
+        sessionStorage.setItem("user", JSON.stringify(response));
+        refreshMetadata(response.user);
+        getUserConfig(response.user)
+          .then(response => {
+            props.setUserConfig(response.user);
+          }
+        );
+      }
     );
-    
   }
 
   function handleRegister(event) {
     event.preventDefault(); //stop the click catcher
     var registerBody = {"user": {"email": email, "password": password, "config": {"firstname": firstName, "lastname": lastName}}};
     postRegisterUser(registerBody)
-        .then(response => {
-            props.setUser(response);
-            sessionStorage.setItem("user", JSON.stringify(response));
-            refreshMetadata(response.user);
-            getUserConfig(response.user)
-                .then(response => {
-                    props.setUserConfig(response.user);
-                }
-            );
-        }
+      .then(response => {
+        props.setUser(response);
+        sessionStorage.setItem("user", JSON.stringify(response));
+        refreshMetadata(response.user);
+        getUserConfig(response.user)
+          .then(response => {
+            props.setUserConfig(response.user);
+          }
+        );
+      }
     );
     
   }
