@@ -70,7 +70,7 @@ const LayoutFlow = (props) => {
     const layoutedElements = getLayoutedElements(props.lineageArray.lineage);
   const [elements, setElements] = useState(layoutedElements);
   const onLoad = (reactFlowInstance) => {
-    reactFlowInstance.fitView();
+    reactFlowInstance.fitView({padding: 0.1, includeHiddenNodes: true});
   }
   const onNodeRightClick = (event, node) => {
     event.preventDefault();
@@ -126,6 +126,8 @@ const LayoutFlow = (props) => {
           connectionLineType="smoothstep"
           onLoad={onLoad}
           onNodeContextMenu={onNodeRightClick}
+          minZoom="0.1"
+          
         >
             <MiniMap />
         </ReactFlow>

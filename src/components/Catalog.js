@@ -326,7 +326,7 @@ export default function Catalog (props) {
     
           <Modal show={show} onHide={handleClose} size="xl">
             <Modal.Header closeButton>
-              <Modal.Title>Modal heading</Modal.Title>
+              <Modal.Title>{catalogModel.name}</Modal.Title>
             </Modal.Header>
             <Modal.Body className="lineagebox">
               <LayoutFlow className="lineagebox" lineageArray={lineage} selectModel={selectModel}/>
