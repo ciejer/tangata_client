@@ -1,14 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useCallback } from 'react';
-import { Container, Overlay, Table } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Overlay, Table } from 'react-bootstrap';
 import ReactFlow, {
   ReactFlowProvider,
-  addEdge,
-  removeElements,
-  Controls,
   MiniMap,
-  isNode,
-  useZoomPanHelper
+  isNode
 } from 'react-flow-renderer';
 import dagre from 'dagre';
 import { useHistory } from 'react-router-dom';
@@ -25,7 +21,6 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const nodeWidth = 200;
 const nodeHeight = 33;
 const getLayoutedElements = (elements, direction = 'LR') => {
-  const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({ rankdir: direction });
   // console.log("getLayoutedElements");
   // console.log(elements);
@@ -38,6 +33,8 @@ const getLayoutedElements = (elements, direction = 'LR') => {
   });
 
   dagre.layout(dagreGraph);
+
+
 
   return elements.map((el) => {
     if (isNode(el)) {
@@ -79,13 +76,25 @@ const LayoutFlow = (props) => {
     setContextMenu({"x":event.pageX,"y":event.pageY,"display":true,"target": event.target, "nodeID": node.id});
     // addToSelect(node.id);
   }
-  const addToSelect = (selectToAdd) => {
-    // props.selectModel(selectToAdd);
-    props.openContextMenu(false);
+
+  const Backdrop = () => {
+    return(
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: "rgba(0,0,0,0.2)",
+        zIndex: 1500
+      }}
+      onClick={() => setContextMenu({"x":null,"y":null,"display":false})}
+      onContextMenu={() => setContextMenu({"x":null,"y":null,"display":false})}
+      />
+    )
   };
 
   const contextMenuDisplay = (contextMenu) => {
-    console.log(contextMenu.display);
     if(contextMenu.display === false) return null;
     // console.log("Displaying Context Menu");
     // console.log(contextMenu);
@@ -97,7 +106,7 @@ const LayoutFlow = (props) => {
     return(
       <div>
         <Overlay target={contextMenu.target} show={contextMenu.display} placement="right-start">
-          <div style={{zIndex:1050}}>
+          <div style={{zIndex:1051}}>
             <Table bordered variant="dark">
               <tbody>
                 <tr>
@@ -114,6 +123,7 @@ const LayoutFlow = (props) => {
             </Table>
           </div>
         </Overlay>
+        <Backdrop show={contextMenu.display}/>
       </div>
     )
   }
@@ -127,7 +137,6 @@ const LayoutFlow = (props) => {
           onLoad={onLoad}
           onNodeContextMenu={onNodeRightClick}
           minZoom="0.1"
-          
         >
             <MiniMap />
         </ReactFlow>

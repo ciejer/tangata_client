@@ -1,10 +1,12 @@
 import React, { Component, useState } from 'react';
-import {Container, Tabs, Tab, Accordion, Card, Button, Modal } from 'react-bootstrap';
+import {Container, Tabs, Tab, Accordion, Card, Button, Modal, Overlay, Table } from 'react-bootstrap';
 import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import  LayoutFlow  from './Lineage';
 import { getModel } from '../services/getModel';
 import ContentEditable from 'react-contenteditable';
+import Select from 'react-select'
+import chroma from 'chroma-js';
 import { useHistory } from 'react-router-dom';
 import {
   BrowserRouter as Router,
@@ -153,8 +155,6 @@ export default function Catalog (props) {
       </>
     )
   }
-  
-  
 
   function catalogColumns() {
 
@@ -179,6 +179,161 @@ export default function Catalog (props) {
             )
           })
         }
+        const options = [
+          { value: 'not_null', label: 'Not Null', "column": value[1].name, "color": "#FF0000"},
+          { value: 'unique', label: 'Unique', "column": value[1].name, "color": "#FF0000"},
+          // { value: 'relationships', label: 'Relationship', "column": value[1].name}
+        ]
+
+        const colourStyles = {
+          control: styles => ({ ...styles, backgroundColor: 'white' }),
+          option: (styles, { data, isDisabled, isFocused, isSelected }) => {
+            const color = chroma(data.color);
+            return {
+              ...styles,
+              backgroundColor: isDisabled
+                ? null
+                : isSelected
+                ? data.color
+                : isFocused
+                ? color.alpha(0.1).css()
+                : null,
+              color: isDisabled
+                ? '#ccc'
+                : isSelected
+                ? chroma.contrast(color, 'white') > 2
+                  ? 'white'
+                  : 'black'
+                : data.color,
+              cursor: isDisabled ? 'not-allowed' : 'default',
+        
+              ':active': {
+                ...styles[':active'],
+                backgroundColor:
+                  !isDisabled && (isSelected ? data.color : color.alpha(0.3).css()),
+              },
+            };
+          },
+          multiValue: (styles, { data }) => {
+            const color = chroma(data.color);
+            return {
+              ...styles,
+              backgroundColor: color.alpha(0.1).css(),
+            };
+          },
+          multiValueLabel: (styles, { data }) => ({
+            ...styles,
+            color: data.color,
+          }),
+          multiValueRemove: (styles, { data }) => ({
+            ...styles,
+            color: data.color,
+            ':hover': {
+              backgroundColor: data.color,
+              color: 'white',
+            },
+          }),
+        };
+
+        function formatTests(tests) {
+          var currentTests = []
+          for(var thisTest in tests) {
+            var testSeverityColor = "#000000";
+            var testType = "";
+            var testLabel = "";
+            if(value[1].tests[thisTest].severity === "ERROR") {
+              testSeverityColor = "#FF0000";
+            } else if(value[1].tests[thisTest].severity === "WARNING") {
+              testSeverityColor = "#FFFF00";
+            }
+            if(value[1].tests[thisTest].type === "relationships") {
+              testType = "relationships";
+              testLabel = (<span title={value[1].tests[thisTest].related_model + "." + value[1].tests[thisTest].related_field}>Relationship</span>);
+            } else if(value[1].tests[thisTest].type === "not_null") {
+              testType = "not_null";
+              testLabel = "Not Null";
+            } else if(value[1].tests[thisTest].type === "unique") {
+              testType = "unique";
+              testLabel = "Unique";
+            }
+            currentTests.push({"value": testType, "label": testLabel, "color": testSeverityColor})
+          }
+        return currentTests;
+        }
+
+        function testChanged(testValue, testAction) {
+          // console.log(testValue);
+          // console.log(testAction);
+          // console.log(value);
+          // console.log(catalogModel);
+          var allTests = []
+          if(testAction.action === "select-option") {
+            var newTest = {};
+            if(testAction.option.value === "unique" || testAction.option.value === "not_null") {
+              // TODO: push test to column.tests
+              newTest = {"type": testAction.option.value, "severity": "ERROR"};
+              allTests.push(testAction.option.value)
+            } else if(testAction.option.value === "relationships") {
+              // TODO: push test to column.tests
+              
+              // allTests.push({[testAction.option.value]: {
+              //   "to": "ref('" + newTest.related_model + "')",
+              //   "field": newTest.related_field
+              // }});
+            }
+            setCatalogModel({
+              ...catalogModel,
+              columns: {
+                ...catalogModel.columns,
+                [testAction.option.column]: {
+                  ...catalogModel.columns[testAction.option.column],
+                  tests: [
+                    ...catalogModel.columns[testAction.option.column].tests,
+                    newTest
+                  ]
+                },
+              }
+            })
+            for(var thisTest in catalogModel.columns[value[0]].tests) { //add existing tests to allTests
+              if(catalogModel.columns[value[0]].tests[thisTest].type === "relationships") {
+                allTests.push({[catalogModel.columns[value[0]].tests[thisTest].type]: {
+                  "to": "ref('" + catalogModel.columns[value[0]].tests[thisTest].related_model + "')",
+                  "field": catalogModel.columns[value[0]].tests[thisTest].related_field}})
+              } else {
+                allTests.push(catalogModel.columns[value[0]].tests[thisTest].type)
+              } 
+            }
+          } else if(testAction.action === "remove-value") {
+            let removeItemIndex = catalogModel.columns[value[0]].tests.indexOf(testAction.removedValue.value);
+            var newTests = [
+              ...catalogModel.columns[value[0]].tests.slice(0,removeItemIndex), ...catalogModel.columns[value[0]].tests.slice(0,removeItemIndex+1)
+            ];
+            setCatalogModel({
+              ...catalogModel,
+              columns: {
+                ...catalogModel.columns,
+                [value[0]]: {
+                  ...catalogModel.columns[value[0]],
+                  tests: newTests
+                },
+              }
+            })
+            for(var thisTest in newTests) { //add existing tests to allTests
+              if(newTests[thisTest].type === "relationships") {
+                allTests.push({[newTests[thisTest].type]: {
+                  "to": "ref('" + newTests[thisTest].related_model + "')",
+                  "field": newTests[thisTest].related_field}})
+              } else {
+                allTests.push(newTests[thisTest].type)
+              } 
+            }
+          }
+          updateMetadataModel({
+            "column": value[0],
+            "tests": allTests,
+            "target": {"dataset": {"metadatafield": "ColumnTest"}}
+          });
+        };
         return(
           <tr key={"columnRow"+value[0]}>
             <td>
@@ -197,8 +352,15 @@ export default function Catalog (props) {
                   placeholder={"Add a description"}
                 />
             </td>
-            <td>
-              {testList(value[1].tests)}
+            <td style={{width:"230px"}}>
+              <Select 
+                options={options}
+                value={formatTests(catalogModel.columns[value[0]].tests)}
+                isMulti
+                onChange={testChanged}
+                styles={colourStyles}
+                menuPortalTarget={document.body}
+              />
             </td>
           </tr>
         );
@@ -244,12 +406,6 @@ export default function Catalog (props) {
   }
 
   function updateMetadataModel (e) {
-    // console.log("updateMetadataModel");
-    // console.log(e);
-    // console.log(e.target.dataset.metadatafield);
-    // console.log(e.target.innerText);
-    // console.log(catalogModel.yaml_path);
-    // console.log(catalogModel.model_path);
     var metadataBody = {};
     switch(e.target.dataset.metadatafield) {
       case "Description":
@@ -292,6 +448,17 @@ export default function Catalog (props) {
           "new_value": e.target.innerText
         }
       break;
+      case "ColumnTest":
+        metadataBody = {
+          "updateMethod": "yamlModelColumnTest",
+          "yaml_path": catalogModel.yaml_path,
+          "model_path": catalogModel.model_path,
+          "model": catalogModel.name,
+          "node_id": catalogModel.nodeID,
+          "column": e.column,
+          "new_value": e.tests
+        }
+      break;
       default:
         // console.log("updateMetadata: no switch case found");
     }
@@ -329,7 +496,7 @@ export default function Catalog (props) {
               <Modal.Title>{catalogModel.name}</Modal.Title>
             </Modal.Header>
             <Modal.Body className="lineagebox">
-              <LayoutFlow className="lineagebox" lineageArray={lineage} selectModel={selectModel}/>
+              <LayoutFlow className="lineagebox" lineageArray={lineage}/>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleClose}>

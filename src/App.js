@@ -269,7 +269,7 @@ class App extends Component {
 
     return (
       <Router>
-        <div id="main" onClick={this.handleAllClicks} onContextMenu={this.handleAllClicks}>
+        <div id="main">
           <Switch>
             <Route exact path="/">
               <Redirect to="/catalog"/>

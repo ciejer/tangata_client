@@ -233,6 +233,24 @@ div:hover[contenteditable="true"] {
   color: teal;
 }
 
+div.testField {
+  background-color: rgba(0,0,0,.03);
+  border-radius: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border:rgba(0,0,0,.08);
+  border-width: 0.5px;
+  border-style: solid;
+  -webkit-user-modify: read-write;
+    overflow-wrap: break-word;
+    -webkit-line-break: after-white-space;
+}
+
+div.testField:hover {
+  background-color: rgba(0,0,0,.08);
+  color: teal;
+}
+
 [contenteditable=true]:hover:empty:before {
   background-color: rgba(0,0,0,.08);
   color: teal;
