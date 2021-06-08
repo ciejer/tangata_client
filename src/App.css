@@ -139,7 +139,7 @@ html, body, #root, #root>div {
 }
 
 .body {
-  padding-top: 70px;
+  padding-top: 56px;
   height: 100%;
 }
 
@@ -263,4 +263,14 @@ div.lineage_model_node {
 div.lineage_source_node {
   background-color: #3DCCCC;
   border-color: teal;
+}
+
+#main .navbar {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  height: 56px;
+}
+
+div.react-bootstrap-drawer {
+  z-index: 0;
 }

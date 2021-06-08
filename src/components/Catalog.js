@@ -1,10 +1,14 @@
-import React, { Component, useState } from 'react';
-import {Container, Tabs, Tab, Accordion, Card, Button, Modal, Overlay, Table } from 'react-bootstrap';
+import React, { Component, useState, useEffect } from 'react';
+import {Container, Collapse, Row, Col, Tabs, Tab, Accordion, Card, Button, Modal, Overlay, Table } from 'react-bootstrap';
+import { Drawer, } from 'react-bootstrap-drawer';
 import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-bootstrap-drawer/lib/style.css';
 import  LayoutFlow  from './Lineage';
 import { getModel } from '../services/getModel';
+import { getModelTree } from '../services/getModelTree';
 import ContentEditable from 'react-contenteditable';
+import JSONTree from 'react-json-tree'
 import Select from 'react-select'
 import chroma from 'chroma-js';
 import { useHistory } from 'react-router-dom';
@@ -20,6 +24,7 @@ import {
 export default function Catalog (props) {
   let history = useHistory();
   const [catalogModel, setCatalogModel] = useState({});
+  const [modelTree, setModelTree] = useState({});
   let { path, url } = useRouteMatch();
   function catalogDescription()  {
     if(catalogModel.description) {
@@ -28,6 +33,14 @@ export default function Catalog (props) {
       return null;
     };
   }
+  useEffect(() => {
+    getModelTree(props.user)
+      .then(response => {
+        if(!response.error) {
+          setModelTree(response);
+        }
+      })
+  }, []);
 
   function catalogDependsOn() {
     // console.log("catalogModel.depends_on");
@@ -536,6 +549,8 @@ export default function Catalog (props) {
         });
       return(<></>);
     }
+    
+    
     const tags = catalogModel.tags.length>0?catalogModel.tags.join(", "):null
     return(
       <Container className="catalogContainer display-block">
@@ -678,20 +693,90 @@ export default function Catalog (props) {
     )
   }
   
+  const NavigationDrawer = (props) => {
+    const [open, setOpen] = useState(false);
+  
+    const handleToggle = () => setOpen(!open);
 
+    const theme = {
+      scheme: 'google',
+      author: 'seth wright (http://sethawright.com)',
+      base00: '#1d1f21',
+      base01: '#282a2e',
+      base02: '#373b41',
+      base03: '#000000', //#000000
+      base04: '#b4b7b4',
+      base05: '#c5c8c6',
+      base06: '#e0e0e0',
+      base07: '#ffffff',
+      base08: '#CC342B',
+      base09: '#F96A38',
+      base0A: '#FBA922',
+      base0B: '#198844',
+      base0C: '#3971ED',
+      base0D: '#3971ED',
+      base0E: '#A36AC7',
+      base0F: '#3971ED'
+    };
+
+    var treeModelClick = (e) => {
+      console.log(e);
+      e.preventDefault(); 
+
+      history.push("/catalog/"+e.target.dataset.fullnodeid);
+    };
+  
+    return (
+      <Drawer { ...props }>
+        <Drawer.Toggle onClick={ handleToggle } />
+  
+        <Collapse in={ open }>
+          <Drawer.Overflow>
+              <Drawer.Nav>
+                <JSONTree 
+                  data={modelTree} 
+                  theme={theme} 
+                  labelRenderer={
+                    ([key, keyP1, keyP2, keyP3, keyP4, keyP5, keyP6, keyP7, keyP8]) => {
+                      let linkVal = ""
+                      if(keyP8) linkVal += keyP8 + "."
+                      if(keyP7) linkVal += keyP7 + "."
+                      if(keyP6) linkVal += keyP6 + "."
+                      if(keyP5) linkVal += keyP5 + "."
+                      if(keyP4) linkVal += keyP4 + "."
+                      if(keyP3) linkVal += keyP3 + "."
+                      if(keyP2) linkVal += keyP2 + "."
+                      if(keyP1) linkVal += keyP1 + "."
+                      if(key) linkVal += key
+                      return(<a href="#" onClick={treeModelClick} data-fullnodeid={linkVal}>{key}</a>)
+                    }
+                  }
+                  shouldExpandNode={() => {return true}}
+                  hideRoot = {true}
+
+                />
+              </Drawer.Nav>
+          </Drawer.Overflow>
+        </Collapse>
+      </Drawer>
+    );
+  };
 
     return (
-      <Switch>
-        <Route exact path = {path}>
-          <div>
-            Welcome to the Catalog. Search in the bar above to find models.
-          </div>
-        </Route>
-        <Route path={`${path}/:catalogPage`}>
-          <CatalogPage/>
-        </Route>
-      </Switch>
-        
-          
+      <Container fluid>
+        <Row className="flex-xl-nowrap">
+          <Col as={ NavigationDrawer } xs={ 12 } md={ 4 } lg={ 3 } />
+          <Col>
+            <Switch>
+              <Route exact path = {path}>
+                
+              </Route>
+              <Route path={`${path}/:catalogPage`}>
+                <CatalogPage/>
+              </Route>
+            </Switch>
+          </Col>
+        </Row>
+      </Container>
     );
 }
