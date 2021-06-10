@@ -226,11 +226,14 @@ html, body, #root, #root>div {
   border:rgba(0,0,0,.08);
   border-width: 0.5px;
   border-style: solid;
+  min-height: 36px;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 div:hover[contenteditable="true"] {
   background-color: rgba(0,0,0,.08);
-  color: teal;
+  color: #0D8590;
 }
 
 div.testField {
@@ -248,12 +251,12 @@ div.testField {
 
 div.testField:hover {
   background-color: rgba(0,0,0,.08);
-  color: teal;
+  color: #0D8590;
 }
 
 [contenteditable=true]:hover:empty:before {
   background-color: rgba(0,0,0,.08);
-  color: teal;
+  color: #0D8590;
 }
 
 div.lineage_model_node {
@@ -262,7 +265,7 @@ div.lineage_model_node {
 }
 div.lineage_source_node {
   background-color: #3DCCCC;
-  border-color: teal;
+  border-color: #0D8590;
 }
 
 #main .navbar {
@@ -273,4 +276,52 @@ div.lineage_source_node {
 
 div.react-bootstrap-drawer {
   z-index: 0;
+}
+
+
+.treeview > .toggle {
+  pointer-events: all;
+  cursor: pointer;
+}
+.treeview > .toggle:hover {
+  color: #63b1de;
+  fill: #63b1de;
+}
+
+/* li.rstm-tree-item--focused {
+  box-shadow: none;
+  z-index: unset;
+}
+
+li.rstm-tree-item--active {
+  border-bottom: 1px solid #ccc;
+  color: #333;
+  background: none;
+} */
+
+li.rstm-tree-item {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+li.rstm-tree-item:hover {
+  text-overflow: clip;
+  white-space: normal;
+  word-break:break-all;
+  background-color: #095E66;
+  color:white;
+}
+
+li.rstm-tree-item--active {
+  background: #0D8590;
+}
+
+button.tealButton {
+  background-color: #0D8590;
+  color: white;
+}
+
+button.tealButton:hover {
+  background-color: #095E66;
+  color: white;
 }

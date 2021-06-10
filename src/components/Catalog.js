@@ -1,5 +1,5 @@
-import React, { Component, useState, useEffect } from 'react';
-import {Container, Collapse, Row, Col, Tabs, Tab, Accordion, Card, Button, Modal, Overlay, Table } from 'react-bootstrap';
+import React, { useState, useEffect, useRef } from 'react';
+import {Container, Collapse, Row, Col, Tabs, Tab, Accordion, Card, Button, Modal } from 'react-bootstrap';
 import { Drawer, } from 'react-bootstrap-drawer';
 import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -8,7 +8,8 @@ import  LayoutFlow  from './Lineage';
 import { getModel } from '../services/getModel';
 import { getModelTree } from '../services/getModelTree';
 import ContentEditable from 'react-contenteditable';
-import JSONTree from 'react-json-tree'
+import TreeMenu from 'react-simple-tree-menu';
+import 'react-simple-tree-menu/dist/main.css';
 import Select from 'react-select'
 import chroma from 'chroma-js';
 import { useHistory } from 'react-router-dom';
@@ -24,7 +25,8 @@ import {
 export default function Catalog (props) {
   let history = useHistory();
   const [catalogModel, setCatalogModel] = useState({});
-  const [modelTree, setModelTree] = useState({});
+  const [modelTree, setModelTree] = useState();
+  const treeRef = useRef();
   let { path, url } = useRouteMatch();
   function catalogDescription()  {
     if(catalogModel.description) {
@@ -37,7 +39,7 @@ export default function Catalog (props) {
     getModelTree(props.user)
       .then(response => {
         if(!response.error) {
-          setModelTree(response);
+          setModelTree(RecurseFullTree(response));
         }
       })
   }, []);
@@ -173,25 +175,6 @@ export default function Catalog (props) {
 
     const columnRows = () => {
       return Object.entries(catalogModel.columns).map((value,index) => {
-        const testList = (tests) => {
-          // console.log(tests);
-          return tests.map((key,testIndex) => {
-            // console.log(key);
-            // console.log(value);
-            if(key.type==="relationships") {
-              return (
-                <div key={"catalogTest"+index+"."+testIndex} className={"test-"+key.severity.toLowerCase()} title={"On fail: "+key.severity}>
-                  is found in {key.related_model}.{key.related_field}
-                </div>
-              )
-            }
-            return (
-              <div key={"catalogTest"+index+"."+testIndex} className={"test-"+key.severity.toLowerCase()} title={"On fail: "+key.severity}>
-                {key.type}
-              </div>
-            )
-          })
-        }
         const options = [
           { value: 'not_null', label: 'Not Null', "column": value[1].name, "color": "#FF0000"},
           { value: 'unique', label: 'Unique', "column": value[1].name, "color": "#FF0000"},
@@ -418,6 +401,33 @@ export default function Catalog (props) {
     };
   }
 
+  const RecurseFullTree = (data) => {
+    var fullResults = [RecurseTree2(data,"model","model")].concat([RecurseTree2(data,"source","source")]);
+    return fullResults;
+    
+  }
+  const RecurseTree2 = (data, lastItem, modelPath) => {
+    var items = [];
+    var loopVar;
+    if(lastItem) {
+      loopVar = data[lastItem];
+    } else {
+      loopVar = data;
+    }
+    if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0) {
+      for(var item in loopVar) {
+        items.push(RecurseTree2(loopVar, item, modelPath + "." + item));
+      };
+      return(
+        {"label":lastItem, "key":modelPath, "nodes": items}
+      );
+    } else {
+      return(
+        {"label":lastItem, "key":modelPath}
+      );
+    };
+  };
+
   function updateMetadataModel (e) {
     var metadataBody = {};
     switch(e.target.dataset.metadatafield) {
@@ -500,7 +510,7 @@ export default function Catalog (props) {
     
       return (
         <>
-          <Button variant="primary" onClick={handleShow}>
+          <Button className="tealButton" onClick={handleShow}>
             Show Lineage
           </Button>
     
@@ -698,34 +708,36 @@ export default function Catalog (props) {
   
     const handleToggle = () => setOpen(!open);
 
-    const theme = {
-      scheme: 'google',
-      author: 'seth wright (http://sethawright.com)',
-      base00: '#1d1f21',
-      base01: '#282a2e',
-      base02: '#373b41',
-      base03: '#000000', //#000000
-      base04: '#b4b7b4',
-      base05: '#c5c8c6',
-      base06: '#e0e0e0',
-      base07: '#ffffff',
-      base08: '#CC342B',
-      base09: '#F96A38',
-      base0A: '#FBA922',
-      base0B: '#198844',
-      base0C: '#3971ED',
-      base0D: '#3971ED',
-      base0E: '#A36AC7',
-      base0F: '#3971ED'
-    };
-
     var treeModelClick = (e) => {
-      console.log(e);
-      e.preventDefault(); 
-
-      history.push("/catalog/"+e.target.dataset.fullnodeid);
+      if(e.hasNodes === false) {
+        history.push("/catalog/"+e.key.split("/").pop());
+      } else {
+        treeRef.current.resetOpenNodes(treeRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
+        treeRef.current.toggleNode(e.key);
+      }
     };
-  
+    function getTreeRef(nodeID) {
+      if(nodeID) {
+        var concatPath = "";
+        var splitNodeID = nodeID.split(".")
+        for(var thisStep in splitNodeID) {
+          concatPath += nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length) + "/"
+        }
+        var currentModelTreeRef = concatPath.slice(0,-1);
+        return currentModelTreeRef;
+      } else return null;
+      
+    }
+    function currentOpenNodes(nodeID) {
+      if(nodeID) {
+        var openNodes = [];
+        var splitNodeID = nodeID.split(".")
+        for(var thisStep in splitNodeID) {
+          openNodes.push(getTreeRef(nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length)))
+        }
+        return openNodes;
+    } else return null;
+    }
     return (
       <Drawer { ...props }>
         <Drawer.Toggle onClick={ handleToggle } />
@@ -733,28 +745,15 @@ export default function Catalog (props) {
         <Collapse in={ open }>
           <Drawer.Overflow>
               <Drawer.Nav>
-                <JSONTree 
-                  data={modelTree} 
-                  theme={theme} 
-                  labelRenderer={
-                    ([key, keyP1, keyP2, keyP3, keyP4, keyP5, keyP6, keyP7, keyP8]) => {
-                      let linkVal = ""
-                      if(keyP8) linkVal += keyP8 + "."
-                      if(keyP7) linkVal += keyP7 + "."
-                      if(keyP6) linkVal += keyP6 + "."
-                      if(keyP5) linkVal += keyP5 + "."
-                      if(keyP4) linkVal += keyP4 + "."
-                      if(keyP3) linkVal += keyP3 + "."
-                      if(keyP2) linkVal += keyP2 + "."
-                      if(keyP1) linkVal += keyP1 + "."
-                      if(key) linkVal += key
-                      return(<a href="#" onClick={treeModelClick} data-fullnodeid={linkVal}>{key}</a>)
-                    }
-                  }
-                  shouldExpandNode={() => {return true}}
-                  hideRoot = {true}
-
-                />
+                <TreeMenu
+                  data={modelTree}
+                  initialActiveKey={getTreeRef(catalogModel.nodeID)}
+                  initialOpenNodes={currentOpenNodes(catalogModel.nodeID)}
+                  onClickItem={treeModelClick}
+                  ref={treeRef}
+                  hasSearch={false}
+                >
+                </TreeMenu>
               </Drawer.Nav>
           </Drawer.Overflow>
         </Collapse>
