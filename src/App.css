@@ -124,8 +124,22 @@
   color: whitesmoke;
 }
 
-.searchbox-width {
-  width: 800px !important;
+div.searchbox {
+  width: 800px;
+  border-radius: 5px;
+  border-color: #0D8590;
+  border-width: 2px;
+  border-style: solid;
+  background-color: white;
+}
+
+div.searchbox > div:nth-child(even) {
+  background-color: #e9fbfd;
+  border-radius: 5px;
+}
+
+div.searchbox > div.row {
+  padding: 5px;
 }
 
 html, body, #root, #root>div {
@@ -276,6 +290,7 @@ div.lineage_source_node {
 
 div.react-bootstrap-drawer {
   z-index: 0;
+  overflow:scroll;
 }
 
 
@@ -288,16 +303,30 @@ div.react-bootstrap-drawer {
   fill: #63b1de;
 }
 
-/* li.rstm-tree-item--focused {
-  box-shadow: none;
-  z-index: unset;
+.catalogColumnName {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
+  max-width: 20vw;
+  display: block;
 }
 
-li.rstm-tree-item--active {
-  border-bottom: 1px solid #ccc;
-  color: #333;
-  background: none;
-} */
+.catalogColumnName:hover {
+  text-overflow: clip;
+  white-space: normal;
+  word-break:break-all;
+}
+
+.catalogColumnType {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.catalogColumnType:hover {
+  text-overflow: clip;
+  white-space: normal;
+  word-break:break-all;
+}
 
 li.rstm-tree-item {
   text-overflow: ellipsis;
@@ -323,5 +352,20 @@ button.tealButton {
 
 button.tealButton:hover {
   background-color: #095E66;
+  color: white;
+}
+
+button.tealButton:focus {
+  background-color: #0D8590;
+  color: white;
+}
+
+button.tealButton:focus:hover {
+  background-color: #095E66;
+  color: white;
+}
+
+button.btn-primary.tealButton:not(:disabled):active { /*This has to be this specific to match*/
+  background-color: #0D8590;
   color: white;
 }

@@ -92,7 +92,7 @@ export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModel
         return (
             <div className="row" key={"searchRow"+index}>
                 <div className="col-sm">
-                    <div className="container border-top border-bottom" onClick={(e) => selectSearchResult(e, index)}>
+                    <div className="container" onClick={(e) => selectSearchResult(e, index)}>
                         <div className="row">
                             <div className="col font-weight-bold">
                                 {searchResult.modelName.toLowerCase()}
@@ -146,12 +146,7 @@ export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModel
         const actionText = appState==="Catalog"?"open in Catalog":"add to Model Builder"
         return(
             <Overlay target={searchBox} show={searchDropdown} placement="bottom">
-                <div className="container bg-light searchbox-width z-200">
-                    <div className="row">
-                        <div className="col-sm font-weight-bold font-italic">
-                            Select model to {actionText}:
-                        </div>
-                    </div>
+                <div className="container searchbox z-200">
                     {allSearchRows}
                 </div>
             </Overlay>

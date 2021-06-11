@@ -25,6 +25,7 @@ import {
 export default function Catalog (props) {
   let history = useHistory();
   const [catalogModel, setCatalogModel] = useState({});
+  const [rawModelTree, setRawModelTree] = useState();
   const [modelTree, setModelTree] = useState();
   const treeRef = useRef();
   let { path, url } = useRouteMatch();
@@ -39,6 +40,7 @@ export default function Catalog (props) {
     getModelTree(props.user)
       .then(response => {
         if(!response.error) {
+          setRawModelTree(response);
           setModelTree(RecurseFullTree(response));
         }
       })
@@ -332,10 +334,10 @@ export default function Catalog (props) {
         };
         return(
           <tr key={"columnRow"+value[0]}>
-            <td>
-              {value[0].toLowerCase()}
+            <td className="catalogColumnName">
+              {value[0].toLowerCase().replaceAll("_","_\u200b")}
             </td>
-            <td>
+            <td className="catalogColumnType">
               {value[1].type.toLowerCase()}
             </td>
             <td>
@@ -344,6 +346,7 @@ export default function Catalog (props) {
                   html={value[1].description}
                   onBlur={updateMetadataModel}
                   data-metadatafield="ColumnDescription"
+                  className="catalogColumnDescription"
                   data-columnName={value[0].toLowerCase()}
                   placeholder={"Add a description"}
                 />
@@ -404,7 +407,6 @@ export default function Catalog (props) {
   const RecurseFullTree = (data) => {
     var fullResults = [RecurseTree2(data,"model","model")].concat([RecurseTree2(data,"source","source")]);
     return fullResults;
-    
   }
   const RecurseTree2 = (data, lastItem, modelPath) => {
     var items = [];
@@ -416,7 +418,13 @@ export default function Catalog (props) {
     }
     if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0) {
       for(var item in loopVar) {
-        items.push(RecurseTree2(loopVar, item, modelPath + "." + item));
+        if(modelPath + "." + item === catalogModel.nodeID) {
+          console.log("matched");
+          console.log(modelPath + "." + item);
+          items.unshift(RecurseTree2(loopVar, item, modelPath + "." + item));
+        } else {
+          items.push(RecurseTree2(loopVar, item, modelPath + "." + item));
+        }
       };
       return(
         {"label":lastItem, "key":modelPath, "nodes": items}
@@ -545,6 +553,19 @@ export default function Catalog (props) {
     }
   
   }
+  
+  function getTreeRef(nodeID) {
+    if(nodeID) {
+      var concatPath = "";
+      var splitNodeID = nodeID.split(".")
+      for(var thisStep in splitNodeID) {
+        concatPath += nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length) + "/"
+      }
+      var currentModelTreeRef = concatPath.slice(0,-1);
+      return currentModelTreeRef;
+    } else return null;
+    
+  }
 
   function CatalogPage() {
     let { catalogPage } = useParams();
@@ -555,6 +576,10 @@ export default function Catalog (props) {
           // console.log(response)
           if(!response.error) {
             setCatalogModel(response);
+            if(rawModelTree) {
+              setModelTree(RecurseFullTree(rawModelTree));
+              // treeRef.current.resetOpenNodes(treeRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
+            }
           }
         });
       return(<></>);
@@ -716,18 +741,7 @@ export default function Catalog (props) {
         treeRef.current.toggleNode(e.key);
       }
     };
-    function getTreeRef(nodeID) {
-      if(nodeID) {
-        var concatPath = "";
-        var splitNodeID = nodeID.split(".")
-        for(var thisStep in splitNodeID) {
-          concatPath += nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length) + "/"
-        }
-        var currentModelTreeRef = concatPath.slice(0,-1);
-        return currentModelTreeRef;
-      } else return null;
-      
-    }
+
     function currentOpenNodes(nodeID) {
       if(nodeID) {
         var openNodes = [];
