@@ -282,7 +282,7 @@ class App extends Component {
                 appState={this.state.appState}
               />
             </Route>
-            <this.LoginRoute path="/catalog">
+            <this.LoginRoute path={["/catalog","/search"]}>
               <NavBar
                 addModel={this.addModel}
                 hostVersion={this.state.hostVersion}

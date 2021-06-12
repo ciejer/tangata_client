@@ -7,6 +7,7 @@ import 'react-bootstrap-drawer/lib/style.css';
 import  LayoutFlow  from './Lineage';
 import { getModel } from '../services/getModel';
 import { getModelTree } from '../services/getModelTree';
+import { getModelSearch } from '../services/getModelSearch';
 import ContentEditable from 'react-contenteditable';
 import TreeMenu from 'react-simple-tree-menu';
 import 'react-simple-tree-menu/dist/main.css';
@@ -26,6 +27,8 @@ export default function Catalog (props) {
   let history = useHistory();
   const [catalogModel, setCatalogModel] = useState({});
   const [rawModelTree, setRawModelTree] = useState();
+  const [searchResults, setSearchResults] = useState();
+  const routeSearchQuery = useRouteMatch("/catalog/search/:searchQuery");
   const [modelTree, setModelTree] = useState();
   const treeRef = useRef();
   let { path, url } = useRouteMatch();
@@ -567,9 +570,114 @@ export default function Catalog (props) {
     
   }
 
+  function SearchPage() {
+    let { searchQuery } = useParams();
+    if(searchResults && searchResults.searchString === searchQuery) {
+      const selectSearchResult = (e,index) => {
+          history.push("/catalog/"+searchResults.results[index].nodeID);
+      }
+
+      const searchRow = (searchResult, index) => {
+          // console.log("searchRow")
+          // console.log(searchResult);
+          const columnDetails = () => {
+              if(searchResult.type==="column_name" || searchResult.type==="column_description") {
+                  return(
+                      <div className="row">
+                          <div className="col">
+                              Column: {searchResult.columnName}
+                          </div>
+                          <div className="col">
+                              {searchResult.columnDescription}
+                          </div>
+                      </div>
+                  );
+              } else return null;
+          }
+          const tagDetails = () => {
+              if(searchResult.type==="tag_name") {
+                  return(
+                      <div className="row">
+                          <div className="col">
+                              Tag: {searchResult.tagName}
+                          </div>
+                      </div>
+                  );
+              } else return null;
+          }
+          
+          return (
+              <div className="row" key={"searchRow"+index}>
+                  <div className="col-sm">
+                      <div className="container" onClick={(e) => selectSearchResult(e, index)}>
+                          <div className="row">
+                              <div className="col font-weight-bold">
+                                  {searchResult.modelName.toLowerCase()}
+                              </div>
+                              <div className="col font-weight-light font-italic text-right">
+                                  {searchResult.nodeID.toLowerCase()}
+                              </div>
+                          </div>
+                          <div className="row">
+                              <div className="col font-italic">
+                                  {searchResult.modelDescription}
+                              </div>
+                          </div>
+                          {columnDetails()}
+                          {tagDetails()}
+                      </div>
+                  </div>
+              </div>
+          );
+      }    
+      var AllSearchRows = () => {
+          if(searchResults.results.length===0) {
+            return(
+              <div className="container searchbox z-200">
+                <Row>
+                  <Col>
+                    <h5 className="text-center">No search results</h5>
+                  </Col>
+                </Row>
+                  
+              </div>
+            );
+          }
+          const allSearchRows = searchResults.results.map((searchResult, index) => searchRow(searchResult, index));
+          return(
+                  <div className="container searchbox z-200">
+                    <Row>
+                      <Col>
+                        <h5 className="text-center">{searchResults.results.length} search results:</h5>
+                      </Col>
+                    </Row>
+                      {allSearchRows}
+                  </div>
+          );
+          
+      }
+      return(<div><AllSearchRows/></div>);
+    } else {
+      getModelSearch(searchQuery, props.user)
+      .then(response => {
+        // console.log(response);
+        if(response.length===0 || response.error) {
+          setSearchResults([]);
+          return null;
+        }
+        if(response.searchString === window.location.href.split('/').pop()) {
+          //searchQuery and router don't update fast enough; only current url does
+          setSearchResults(response);
+        };
+      });
+      return(<div>Loading Search Results...</div>)
+    } 
+  }
+
   function CatalogPage() {
     let { catalogPage } = useParams();
-    // console.log(catalogPage);
+    console.log(catalogPage);
+    console.log(catalogModel?catalogModel.nodeID:"None");
     if(Object.keys(catalogModel).length === 0 || catalogModel.nodeID !== catalogPage) {
       getModel(catalogPage, props.user)
         .then(response => {
@@ -584,7 +692,7 @@ export default function Catalog (props) {
         });
       return(<></>);
     }
-    
+
     
     const tags = catalogModel.tags.length>0?catalogModel.tags.join(", "):null
     return(
@@ -783,6 +891,9 @@ export default function Catalog (props) {
             <Switch>
               <Route exact path = {path}>
                 
+              </Route>
+              <Route path={`${path}/search/:searchQuery`}>
+                <SearchPage/>
               </Route>
               <Route path={`${path}/:catalogPage`}>
                 <CatalogPage/>

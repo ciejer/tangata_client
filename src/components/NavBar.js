@@ -1,11 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Overlay, Popover, Navbar, Nav } from 'react-bootstrap'; 
-import { getModelSearch } from '../services/getModelSearch';
 import { useHistory } from 'react-router-dom';
 const reactState = process.env.NODE_ENV;
 export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModelBuilder, openCatalog, openConfig, appState, contextMenuOpen, openContextMenu, selectModel, user, setUser, userConfig, setUserConfig}) => {
-    const [searchDropdown, setSearchDropdown] = useState(false);
-    const [searchResults, setSearchResults] = useState([]);
     let history = useHistory();
     const debugLogState = (reactState) => {
         if ( reactState === 'development') {
@@ -31,127 +28,24 @@ export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModel
 
     const searchBox = useRef(null);
 
-    if(contextMenuOpen === false && searchDropdown===true) { //add this to every other component that has context menus
-        setSearchDropdown(false);
-      }
-
-
-    const selectSearchResult = (e,index) => {
-        // console.log("clickResult");
-        // console.log(index);
-        openContextMenu(false);
-        setSearchDropdown(false);
-        e.stopPropagation();
-        // selectModel(searchResults[index].nodeID);
-        // openCatalog();
-        history.push("/catalog/"+searchResults[index].nodeID);
+    function debounceSearchResults(){
+      var timeout = 500;
+      let timer;
+      clearTimeout(timer);
+      timer = setTimeout(() => { history.push("/catalog/search/"+searchBox.current.value); }, timeout);
     }
 
-    const toggleSearchDropdown = (newValue) => {
-        
-        setSearchDropdown(newValue);
-        openContextMenu(newValue);
-    }
-
-    const preventSearchClicks = (e) => {
-        if(e.target.value.length>0) {
-            e.stopPropagation();
-            openContextMenu(true);
-        }
-    }
-
-    const searchRow = (searchResult, index) => {
-        // console.log("searchRow")
-        // console.log(searchResult);
-        const columnDetails = () => {
-            if(searchResult.type==="column_name" || searchResult.type==="column_description") {
-                return(
-                    <div className="row">
-                        <div className="col">
-                            Column: {searchResult.columnName}
-                        </div>
-                        <div className="col">
-                            {searchResult.columnDescription}
-                        </div>
-                    </div>
-                );
-            } else return null;
-        }
-        const tagDetails = () => {
-            if(searchResult.type==="tag_name") {
-                return(
-                    <div className="row">
-                        <div className="col">
-                            Tag: {searchResult.tagName}
-                        </div>
-                    </div>
-                );
-            } else return null;
-        }
-        
-        return (
-            <div className="row" key={"searchRow"+index}>
-                <div className="col-sm">
-                    <div className="container" onClick={(e) => selectSearchResult(e, index)}>
-                        <div className="row">
-                            <div className="col font-weight-bold">
-                                {searchResult.modelName.toLowerCase()}
-                            </div>
-                            <div className="col font-weight-light font-italic text-right">
-                                {searchResult.nodeID.toLowerCase()}
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="col font-italic">
-                                {searchResult.modelDescription}
-                            </div>
-                        </div>
-                        {columnDetails()}
-                        {tagDetails()}
-                    </div>
-                </div>
-            </div>
-        );
-    }    
-    
     const getSearchResults = (e) => {
         // console.log("getSearchResults");
         if(e.target.value.trim().length===0) {
-            setSearchResults([]);
             return null;
         };
-        openContextMenu(true);
-        setSearchDropdown(true);
-        getModelSearch(searchBox.current.value, user)
-            .then(response => {
-                // console.log(response);
-                if(response.length===0 || response.error) {
-                    setSearchResults([]);
-                    return null;
-                }
-                if(response.searchString === searchBox.current.value) {
-                    const allSearchRows = response.results.slice(0,15);
-                    setSearchResults(allSearchRows);
-                }
-                // console.log("getSearchResults");
-                // console.log(allSearchRows);
-            });
-        
-    }
+        debounceSearchResults();
+        return null;
+    };
 
-    const allSearchRows = () => {
-        if(searchResults.length===0 || !searchDropdown) return null;
-        
-        const allSearchRows = searchResults.map((searchResult, index) => searchRow(searchResult, index));
-        const actionText = appState==="Catalog"?"open in Catalog":"add to Model Builder"
-        return(
-            <Overlay target={searchBox} show={searchDropdown} placement="bottom">
-                <div className="container searchbox z-200">
-                    {allSearchRows}
-                </div>
-            </Overlay>
-        );
-        
+    const toggleSearch = () => {
+        history.push("/catalog/search/"+searchBox.current.value);
     }
 
     const reloadDBT = () => {
@@ -208,9 +102,8 @@ export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModel
             </div>
             <div className="navbar-nav p2">
                 <form className="form-inline">
-                    <input className="form-control mr-sm-2" type="search" ref={searchBox} onClick={(e) => preventSearchClicks(e)} onChange={(e) => getSearchResults(e)} onFocus={() => toggleSearchDropdown(true)} placeholder="Search Models" aria-label="Search Models"/>
+                    <input className="form-control mr-sm-2" type="search" ref={searchBox} onFocus={() => toggleSearch()} onChange={(e) => getSearchResults(e)} placeholder="Search Models" aria-label="Search Models"/>
                 </form>
-                {allSearchRows()}
             </div>
             <div className="navbar-nav p-2">
                 <div className={"nav-item nav-link mr-sm-2"+(userConfig.dbtmethod!=="UploadMetadata"?null:" d-none")} role="button" onClick={() => reloadDBT()}>Refresh dbt_ catalog</div>
