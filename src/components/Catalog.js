@@ -5,6 +5,8 @@ import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-drawer/lib/style.css';
 import  LayoutFlow  from './Lineage';
+import  RefSearchResults  from './RefSearchResults';
+import  ShowSearchResults  from './ShowSearchResults';
 import { getModel } from '../services/getModel';
 import { getModelTree } from '../services/getModelTree';
 import { getModelSearch } from '../services/getModelSearch';
@@ -28,8 +30,11 @@ export default function Catalog (props) {
   const [catalogModel, setCatalogModel] = useState({});
   const [rawModelTree, setRawModelTree] = useState();
   const [searchResults, setSearchResults] = useState();
+  const [newRefTest, setNewRefTest] = useState();
+  const [refSearchQuery, setRefSearchQuery] = useState();
   const routeSearchQuery = useRouteMatch("/catalog/search/:searchQuery");
-  const [modelTree, setModelTree] = useState();
+  const [folderTree, setFolderTree] = useState();
+  const [dbTree, setDBTree] = useState();
   const treeRef = useRef();
   let { path, url } = useRouteMatch();
   function catalogDescription()  {
@@ -44,7 +49,8 @@ export default function Catalog (props) {
       .then(response => {
         if(!response.error) {
           setRawModelTree(response);
-          setModelTree(RecurseFullTree(response));
+          setFolderTree(RecurseFullFolderTree(response));
+          setDBTree(RecurseFullDBTree(response));
         }
       })
   }, []);
@@ -176,6 +182,65 @@ export default function Catalog (props) {
     )
   }
 
+  function AddRefTest() {
+    
+    const handleClose = () => {
+      setNewRefTest(null);
+      }
+
+    const selectModelColumn = (model, column) => {
+      var allTests = [];
+      var newTest = {"type": "relationships", "severity": "ERROR", "related_model": model, "related_field": column};
+      allTests.push({"relationships": {
+        "to": "ref('" + model + "')",
+        "field": column}});
+      setCatalogModel({
+        ...catalogModel,
+        columns: {
+          ...catalogModel.columns,
+          [newRefTest.column.name]: {
+            ...catalogModel.columns[newRefTest.column.name],
+            tests: [
+              ...catalogModel.columns[newRefTest.column.name].tests,
+              newTest
+            ]
+          },
+        }
+      });
+      for(var thisTest in catalogModel.columns[newRefTest.column.name].tests) { //add existing tests to allTests
+        if(catalogModel.columns[newRefTest.column.name].tests[thisTest].type === "relationships") {
+          allTests.push({[catalogModel.columns[newRefTest.column.name].tests[thisTest].type]: {
+            "to": "ref('" + catalogModel.columns[newRefTest.column.name].tests[thisTest].related_model + "')",
+            "field": catalogModel.columns[newRefTest.column.name].tests[thisTest].related_field}})
+        } else {
+          allTests.push(catalogModel.columns[newRefTest.column.name].tests[thisTest].type)
+        } 
+      };
+      updateMetadataModel({
+        "column": newRefTest.column.name,
+        "tests": allTests,
+        "target": {"dataset": {"metadatafield": "ColumnTest"}}
+      });
+      handleClose();
+    }
+    
+
+    return(
+      <Modal show={newRefTest} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Reference Test Setup</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Model to reference:
+        <RefSearchResults
+          user = {props.user}
+          selectModelColumn = {selectModelColumn}
+        />
+        </Modal.Body>
+      </Modal>
+    );
+  }
+
   function catalogColumns() {
 
     const columnRows = () => {
@@ -183,7 +248,7 @@ export default function Catalog (props) {
         const options = [
           { value: 'not_null', label: 'Not Null', "column": value[1].name, "color": "#FF0000"},
           { value: 'unique', label: 'Unique', "column": value[1].name, "color": "#FF0000"},
-          // { value: 'relationships', label: 'Relationship', "column": value[1].name}
+          { value: 'relationships', label: 'Relationship', "column": value[1].name, "color": "#FF0000"}
         ]
 
         const colourStyles = {
@@ -267,34 +332,31 @@ export default function Catalog (props) {
           // console.log(testAction);
           // console.log(value);
           // console.log(catalogModel);
-          var allTests = []
+          var allTests = [];
           if(testAction.action === "select-option") {
             var newTest = {};
             if(testAction.option.value === "unique" || testAction.option.value === "not_null") {
               // TODO: push test to column.tests
               newTest = {"type": testAction.option.value, "severity": "ERROR"};
               allTests.push(testAction.option.value)
+              setCatalogModel({
+                ...catalogModel,
+                columns: {
+                  ...catalogModel.columns,
+                  [testAction.option.column]: {
+                    ...catalogModel.columns[testAction.option.column],
+                    tests: [
+                      ...catalogModel.columns[testAction.option.column].tests,
+                      newTest
+                    ]
+                  },
+                }
+              })
             } else if(testAction.option.value === "relationships") {
-              // TODO: push test to column.tests
-              
-              // allTests.push({[testAction.option.value]: {
-              //   "to": "ref('" + newTest.related_model + "')",
-              //   "field": newTest.related_field
-              // }});
+              setNewRefTest({"column": value[1]});
+              setCatalogModel(catalogModel);
             }
-            setCatalogModel({
-              ...catalogModel,
-              columns: {
-                ...catalogModel.columns,
-                [testAction.option.column]: {
-                  ...catalogModel.columns[testAction.option.column],
-                  tests: [
-                    ...catalogModel.columns[testAction.option.column].tests,
-                    newTest
-                  ]
-                },
-              }
-            })
+            
             for(var thisTest in catalogModel.columns[value[0]].tests) { //add existing tests to allTests
               if(catalogModel.columns[value[0]].tests[thisTest].type === "relationships") {
                 allTests.push({[catalogModel.columns[value[0]].tests[thisTest].type]: {
@@ -400,18 +462,18 @@ export default function Catalog (props) {
       return(
         <div className="row">
           <div className="col col-md-auto">
-            This model does not appear to contain any rows.
+            This model does not appear to contain any columns.
           </div>
         </div>
       );
     };
   }
 
-  const RecurseFullTree = (data) => {
-    var fullResults = [RecurseTree2(data,"model","model")].concat([RecurseTree2(data,"source","source")]);
+  const RecurseFullFolderTree = (data) => {
+    var fullResults = [RecurseFolderTree(data,"model","model")].concat([RecurseFolderTree(data,"source","source")]);
     return fullResults;
   }
-  const RecurseTree2 = (data, lastItem, modelPath) => {
+  const RecurseFolderTree = (data, lastItem, modelPath) => {
     var items = [];
     var loopVar;
     if(lastItem) {
@@ -421,13 +483,33 @@ export default function Catalog (props) {
     }
     if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0) {
       for(var item in loopVar) {
-        if(modelPath + "." + item === catalogModel.nodeID) {
-          console.log("matched");
-          console.log(modelPath + "." + item);
-          items.unshift(RecurseTree2(loopVar, item, modelPath + "." + item));
-        } else {
-          items.push(RecurseTree2(loopVar, item, modelPath + "." + item));
-        }
+        items.push(RecurseFolderTree(loopVar, item, modelPath + "." + item));
+      };
+      return(
+        {"label":lastItem, "key":modelPath, "nodes": items}
+      );
+    } else {
+      return(
+        {"label":lastItem, "key":modelPath}
+      );
+    };
+  };
+
+  const RecurseFullDBTree = (data) => {
+    var fullResults = [RecurseDBTree(data,"model","model")].concat([RecurseDBTree(data,"source","source")]);
+    return fullResults;
+  }
+  const RecurseDBTree = (data, lastItem, modelPath) => {
+    var items = [];
+    var loopVar;
+    if(lastItem) {
+      loopVar = data[lastItem];
+    } else {
+      loopVar = data;
+    }
+    if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0) {
+      for(var item in loopVar) {
+        items.push(RecurseDBTree(loopVar, item, modelPath + "." + item));
       };
       return(
         {"label":lastItem, "key":modelPath, "nodes": items}
@@ -452,6 +534,10 @@ export default function Catalog (props) {
           "property_name": "description",
           "new_value": e.target.innerText
         }
+        setCatalogModel({
+          ...catalogModel,
+          "description": e.target.innerText
+        });
       break;
       case "Tags":
         if(e.target.innerText === "None") {
@@ -467,8 +553,14 @@ export default function Catalog (props) {
           "property_name": "tags",
           "new_value": e.target.innerText.split(',').map(function(item) { // Split tags by commas, and remove any spaces if any
               return item.trim();
-            })
+            }),
         }
+        setCatalogModel({
+          ...catalogModel,
+          "tags": e.target.innerText.split(',').map(function(item) { // Split tags by commas, and remove any spaces if any
+            return item.trim();
+          })
+        });
       break;
       case "ColumnDescription":
         metadataBody = {
@@ -481,6 +573,16 @@ export default function Catalog (props) {
           "property_name": "description",
           "new_value": e.target.innerText
         }
+        setCatalogModel({
+          ...catalogModel,
+          columns: {
+            ...catalogModel.columns,
+            [e.target.dataset.columnname]: {
+              ...catalogModel.columns[e.target.dataset.columnname],
+              "description": e.target.innerText
+            },
+          }
+        })
       break;
       case "ColumnTest":
         metadataBody = {
@@ -492,6 +594,7 @@ export default function Catalog (props) {
           "column": e.column,
           "new_value": e.tests
         }
+      // catalogModel is already updated by the tests process
       break;
       default:
         // console.log("updateMetadata: no switch case found");
@@ -573,90 +676,16 @@ export default function Catalog (props) {
   function SearchPage() {
     let { searchQuery } = useParams();
     if(searchResults && searchResults.searchString === searchQuery) {
-      const selectSearchResult = (e,index) => {
+      var selectSearchResult = (e,index) => {
           history.push("/catalog/"+searchResults.results[index].nodeID);
       }
-
-      const searchRow = (searchResult, index) => {
-          // console.log("searchRow")
-          // console.log(searchResult);
-          const columnDetails = () => {
-              if(searchResult.type==="column_name" || searchResult.type==="column_description") {
-                  return(
-                      <div className="row">
-                          <div className="col">
-                              Column: {searchResult.columnName}
-                          </div>
-                          <div className="col">
-                              {searchResult.columnDescription}
-                          </div>
-                      </div>
-                  );
-              } else return null;
-          }
-          const tagDetails = () => {
-              if(searchResult.type==="tag_name") {
-                  return(
-                      <div className="row">
-                          <div className="col">
-                              Tag: {searchResult.tagName}
-                          </div>
-                      </div>
-                  );
-              } else return null;
-          }
-          
-          return (
-              <div className="row" key={"searchRow"+index}>
-                  <div className="col-sm">
-                      <div className="container" onClick={(e) => selectSearchResult(e, index)}>
-                          <div className="row">
-                              <div className="col font-weight-bold">
-                                  {searchResult.modelName.toLowerCase()}
-                              </div>
-                              <div className="col font-weight-light font-italic text-right">
-                                  {searchResult.nodeID.toLowerCase()}
-                              </div>
-                          </div>
-                          <div className="row">
-                              <div className="col font-italic">
-                                  {searchResult.modelDescription}
-                              </div>
-                          </div>
-                          {columnDetails()}
-                          {tagDetails()}
-                      </div>
-                  </div>
-              </div>
-          );
-      }    
-      var AllSearchRows = () => {
-          if(searchResults.results.length===0) {
-            return(
-              <div className="container searchbox z-200">
-                <Row>
-                  <Col>
-                    <h5 className="text-center">No search results</h5>
-                  </Col>
-                </Row>
-                  
-              </div>
-            );
-          }
-          const allSearchRows = searchResults.results.map((searchResult, index) => searchRow(searchResult, index));
-          return(
-                  <div className="container searchbox z-200">
-                    <Row>
-                      <Col>
-                        <h5 className="text-center">{searchResults.results.length} search results:</h5>
-                      </Col>
-                    </Row>
-                      {allSearchRows}
-                  </div>
-          );
-          
-      }
-      return(<div><AllSearchRows/></div>);
+      return(
+        <ShowSearchResults
+          searchResults = {searchResults}
+          resultSelectFunction = {selectSearchResult}
+        />
+      )
+      
     } else {
       getModelSearch(searchQuery, props.user)
       .then(response => {
@@ -685,12 +714,13 @@ export default function Catalog (props) {
           if(!response.error) {
             setCatalogModel(response);
             if(rawModelTree) {
-              setModelTree(RecurseFullTree(rawModelTree));
+              setFolderTree(RecurseFullFolderTree(rawModelTree));
+              setDBTree(RecurseFullDBTree(rawModelTree));
               // treeRef.current.resetOpenNodes(treeRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
             }
           }
         });
-      return(<></>);
+      return(<div>No Model Found</div>);
     }
 
     
@@ -832,6 +862,7 @@ export default function Catalog (props) {
             </Accordion.Collapse>
           </Card>
         </Accordion>
+        <AddRefTest/>
       </Container>
     )
   }
@@ -868,7 +899,16 @@ export default function Catalog (props) {
           <Drawer.Overflow>
               <Drawer.Nav>
                 <TreeMenu
-                  data={modelTree}
+                  data={folderTree}
+                  initialActiveKey={getTreeRef(catalogModel.nodeID)}
+                  initialOpenNodes={currentOpenNodes(catalogModel.nodeID)}
+                  onClickItem={treeModelClick}
+                  ref={treeRef}
+                  hasSearch={false}
+                >
+                </TreeMenu>
+                <TreeMenu
+                  data={dbTree}
                   initialActiveKey={getTreeRef(catalogModel.nodeID)}
                   initialOpenNodes={currentOpenNodes(catalogModel.nodeID)}
                   onClickItem={treeModelClick}
