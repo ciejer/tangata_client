@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { HddRackFill, FolderFill, Table } from 'react-bootstrap-icons';
 import {Container, Collapse, Row, Col, Tabs, Tab, Accordion, Card, Button, Modal } from 'react-bootstrap';
 import { Drawer, } from 'react-bootstrap-drawer';
 import '../App.css';
@@ -9,6 +10,7 @@ import  RefSearchResults  from './RefSearchResults';
 import  ShowSearchResults  from './ShowSearchResults';
 import { getModel } from '../services/getModel';
 import { getModelTree } from '../services/getModelTree';
+import { getDBTree } from '../services/getDBTree';
 import { getModelSearch } from '../services/getModelSearch';
 import ContentEditable from 'react-contenteditable';
 import TreeMenu from 'react-simple-tree-menu';
@@ -29,13 +31,16 @@ export default function Catalog (props) {
   let history = useHistory();
   const [catalogModel, setCatalogModel] = useState({});
   const [rawModelTree, setRawModelTree] = useState();
+  const [rawDBTree, setRawDBTree] = useState();
   const [searchResults, setSearchResults] = useState();
   const [newRefTest, setNewRefTest] = useState();
   const [refSearchQuery, setRefSearchQuery] = useState();
   const routeSearchQuery = useRouteMatch("/catalog/search/:searchQuery");
+  const [treeTab, setTreeTab] = useState("databases");
   const [folderTree, setFolderTree] = useState();
   const [dbTree, setDBTree] = useState();
-  const treeRef = useRef();
+  const treeFolderRef = useRef();
+  const treeDBRef = useRef();
   let { path, url } = useRouteMatch();
   function catalogDescription()  {
     if(catalogModel.description) {
@@ -46,24 +51,33 @@ export default function Catalog (props) {
   }
   useEffect(() => {
     getModelTree(props.user)
-      .then(response => {
-        if(!response.error) {
-          setRawModelTree(response);
-          setFolderTree(RecurseFullFolderTree(response));
-          setDBTree(RecurseFullDBTree(response));
-        }
-      })
+    .then(response => {
+      if(!response.error) {
+        setRawModelTree(response);
+        setFolderTree(RecurseFullFolderTree(response));
+        console.log(RecurseFullFolderTree(response));
+        
+      }
+    })
+    getDBTree(props.user)
+    .then(response => {
+      if(!response.error) {
+        setRawDBTree(response);
+        setDBTree(RecurseFullDBTree(response));
+        console.log(RecurseFullDBTree(response));
+      }
+    })
   }, []);
 
   function catalogDependsOn() {
-    // console.log("catalogModel.depends_on");
-    // console.log(catalogModel.depends_on);
+    // 
+    // 
 
     const ancestorModels = () => {
       if(!catalogModel.depends_on) return null;
-      // console.log("found ancestors");
+      // 
       return catalogModel.depends_on.nodes.map((value,index) => {
-        // console.log(value);
+        // 
         var ancestorClickEvent = (e) => {e.preventDefault(); history.push("/catalog/"+value);};
         return(
           <div key={"catalogDependsOnModel"+index} title={value}>
@@ -93,8 +107,8 @@ export default function Catalog (props) {
   }
 
   function catalogDependencies() {
-    // console.log("catalogModel.referenced_by");
-    // console.log(catalogModel.referenced_by);
+    // 
+    // 
 
     const dependentModels = () => catalogModel.referenced_by.map((value,index) => {
       var dependentClickEvent = (e) => {e.preventDefault(); history.push("/catalog/"+value);};
@@ -113,8 +127,8 @@ export default function Catalog (props) {
   }
 
   function nodeContributors() {
-    // console.log("catalogModel.referenced_by");
-    // console.log(catalogModel.referenced_by);
+    // 
+    // 
 
     const nodeContributorMap = () => catalogModel.all_contributors.map((value,index) => {
       return(
@@ -139,8 +153,8 @@ export default function Catalog (props) {
 
 
   function nodeHistory() {
-    // console.log("catalogModel.referenced_by");
-    // console.log(catalogModel.referenced_by);
+    // 
+    // 
     const fileCommits = () => catalogModel.all_commits.map((value,index) => {
       return(
         <tr key={"catalogFileCommit "+index} title={value.hash}>
@@ -328,10 +342,10 @@ export default function Catalog (props) {
         }
 
         function testChanged(testValue, testAction) {
-          // console.log(testValue);
-          // console.log(testAction);
-          // console.log(value);
-          // console.log(catalogModel);
+          // 
+          // 
+          // 
+          // 
           var allTests = [];
           if(testAction.action === "select-option") {
             var newTest = {};
@@ -496,29 +510,31 @@ export default function Catalog (props) {
   };
 
   const RecurseFullDBTree = (data) => {
-    var fullResults = [RecurseDBTree(data,"model","model")].concat([RecurseDBTree(data,"source","source")]);
+    
+    var fullResults = PopulateDBTree(data.db_models);
     return fullResults;
   }
-  const RecurseDBTree = (data, lastItem, modelPath) => {
+  const PopulateDBTree = (data) => {
     var items = [];
-    var loopVar;
-    if(lastItem) {
-      loopVar = data[lastItem];
-    } else {
-      loopVar = data;
+    
+    for(var item in data) {
+      
+      if(items.filter(function(e) { return e.label === data[item].database}).length === 0 || items.filter(function(e) { return e.label === data[item].database})[0].length===0) {
+        items.push({"label": data[item].database, "key": data[item].database, "nodes": []});
+      }
+      
+      
+      var thisDB = items.filter(function(e) { return e.key === data[item].database})[0].nodes;
+      if(!thisDB || thisDB.length === 0 || thisDB.filter(function(e) { return e.label === data[item].schema}).length===0) {
+        thisDB.push({"label": data[item].schema, "key": data[item].schema, "nodes": []})
+      }
+      var thisSchema = thisDB.filter(function(e) { return e.key === data[item].schema})[0].nodes;
+      thisSchema.push({"label": data[item].name, "key": data[item].nodeID})
+
+      // items[data[item].database].nodes[data[item].schema].nodes[data[item].name] = {"label": data[item].name, "key": data[item].schema}
     }
-    if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0) {
-      for(var item in loopVar) {
-        items.push(RecurseDBTree(loopVar, item, modelPath + "." + item));
-      };
-      return(
-        {"label":lastItem, "key":modelPath, "nodes": items}
-      );
-    } else {
-      return(
-        {"label":lastItem, "key":modelPath}
-      );
-    };
+    
+    return(items);
   };
 
   function updateMetadataModel (e) {
@@ -597,10 +613,10 @@ export default function Catalog (props) {
       // catalogModel is already updated by the tests process
       break;
       default:
-        // console.log("updateMetadata: no switch case found");
+        // 
     }
     if(metadataBody) {
-      // console.log(this.props.user.token);
+      // 
       fetch('/api/v1/update_metadata', {
         method: 'POST',
         headers: {
@@ -619,8 +635,8 @@ export default function Catalog (props) {
     
       const handleClose = () => setShow(false);
       const handleShow = () => setShow(true);
-      // console.log("lineageModal");
-      // console.log(lineage);
+      // 
+      // 
     
       return (
         <>
@@ -668,9 +684,9 @@ export default function Catalog (props) {
         concatPath += nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length) + "/"
       }
       var currentModelTreeRef = concatPath.slice(0,-1);
+      console.log(currentModelTreeRef);
       return currentModelTreeRef;
     } else return null;
-    
   }
 
   function SearchPage() {
@@ -689,7 +705,7 @@ export default function Catalog (props) {
     } else {
       getModelSearch(searchQuery, props.user)
       .then(response => {
-        // console.log(response);
+        // 
         if(response.length===0 || response.error) {
           setSearchResults([]);
           return null;
@@ -705,21 +721,29 @@ export default function Catalog (props) {
 
   function CatalogPage() {
     let { catalogPage } = useParams();
-    console.log(catalogPage);
-    console.log(catalogModel?catalogModel.nodeID:"None");
+    
+    
     if(Object.keys(catalogModel).length === 0 || catalogModel.nodeID !== catalogPage) {
       getModel(catalogPage, props.user)
-        .then(response => {
-          // console.log(response)
-          if(!response.error) {
-            setCatalogModel(response);
-            if(rawModelTree) {
-              setFolderTree(RecurseFullFolderTree(rawModelTree));
-              setDBTree(RecurseFullDBTree(rawModelTree));
-              // treeRef.current.resetOpenNodes(treeRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
-            }
+      .then(response => {
+        // 
+        if(!response.error) {
+          setCatalogModel(response);
+          if(rawModelTree) {
+            setFolderTree(RecurseFullFolderTree(rawModelTree));
+            // treeRef.current.resetOpenNodes(treeRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
           }
-        });
+        }
+      });
+      
+      getDBTree(props.user)
+      .then(response => {
+        if(!response.error) {
+          setRawDBTree(response);
+          setDBTree(RecurseFullDBTree(response));
+          console.log(RecurseFullDBTree(response));
+        }
+      })
       return(<div>No Model Found</div>);
     }
 
@@ -873,11 +897,14 @@ export default function Catalog (props) {
     const handleToggle = () => setOpen(!open);
 
     var treeModelClick = (e) => {
+      console.log(e);
       if(e.hasNodes === false) {
         history.push("/catalog/"+e.key.split("/").pop());
       } else {
-        treeRef.current.resetOpenNodes(treeRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
-        treeRef.current.toggleNode(e.key);
+        treeFolderRef.current.resetOpenNodes(treeFolderRef.current.state.openNodes,getTreeRef(catalogModel.nodeID));
+        treeFolderRef.current.toggleNode(e.key);
+        treeDBRef.current.resetOpenNodes(treeDBRef.current.state.openNodes,[catalogModel.database, catalogModel.database+"/"+catalogModel.schema]);
+        treeDBRef.current.toggleNode(e.key);
       }
     };
 
@@ -888,6 +915,7 @@ export default function Catalog (props) {
         for(var thisStep in splitNodeID) {
           openNodes.push(getTreeRef(nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length)))
         }
+        console.log(openNodes);
         return openNodes;
     } else return null;
     }
@@ -898,24 +926,30 @@ export default function Catalog (props) {
         <Collapse in={ open }>
           <Drawer.Overflow>
               <Drawer.Nav>
-                <TreeMenu
-                  data={folderTree}
-                  initialActiveKey={getTreeRef(catalogModel.nodeID)}
-                  initialOpenNodes={currentOpenNodes(catalogModel.nodeID)}
-                  onClickItem={treeModelClick}
-                  ref={treeRef}
-                  hasSearch={false}
-                >
-                </TreeMenu>
-                <TreeMenu
-                  data={dbTree}
-                  initialActiveKey={getTreeRef(catalogModel.nodeID)}
-                  initialOpenNodes={currentOpenNodes(catalogModel.nodeID)}
-                  onClickItem={treeModelClick}
-                  ref={treeRef}
-                  hasSearch={false}
-                >
-                </TreeMenu>
+                <Tabs activeKey={treeTab} id="treemenu" onSelect={(k) => setTreeTab(k)} className="treeTabs nav nav-tabs nav-justified">
+                  <Tab eventKey="folders" title="Project View">
+                    <TreeMenu
+                      data={folderTree}
+                      initialActiveKey={getTreeRef(catalogModel.nodeID)}
+                      initialOpenNodes={currentOpenNodes(catalogModel.nodeID)}
+                      onClickItem={treeModelClick}
+                      ref={treeFolderRef}
+                      hasSearch={false}
+                    >
+                    </TreeMenu>
+                  </Tab>
+                  <Tab eventKey="databases" title="Database View">
+                    <TreeMenu
+                      data={dbTree}
+                      initialActiveKey={catalogModel.database+"/"+catalogModel.schema+"/"+catalogModel.nodeID}
+                      initialOpenNodes={[catalogModel.database, catalogModel.database+"/"+catalogModel.schema]}
+                      onClickItem={treeModelClick}
+                      ref={treeDBRef}
+                      hasSearch={false}
+                    >
+                    </TreeMenu>
+                  </Tab>
+                </Tabs>
               </Drawer.Nav>
           </Drawer.Overflow>
         </Collapse>
@@ -933,6 +967,9 @@ export default function Catalog (props) {
                 
               </Route>
               <Route path={`${path}/search/:searchQuery`}>
+                <SearchPage/>
+              </Route>
+              <Route path={`${path}/search/`}>
                 <SearchPage/>
               </Route>
               <Route path={`${path}/:catalogPage`}>
