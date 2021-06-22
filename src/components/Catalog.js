@@ -485,6 +485,7 @@ export default function Catalog (props) {
 
   const RecurseFullFolderTree = (data) => {
     var fullResults = [RecurseFolderTree(data,"model","model")].concat([RecurseFolderTree(data,"source","source")]);
+    console.log(fullResults);
     return fullResults;
   }
   const RecurseFolderTree = (data, lastItem, modelPath) => {
@@ -499,6 +500,15 @@ export default function Catalog (props) {
       for(var item in loopVar) {
         items.push(RecurseFolderTree(loopVar, item, modelPath + "." + item));
       };
+      items = items.sort(function(a, b) {
+        if (a.label > b.label) {
+          return 1;
+        }
+        if (a.label < b.label) {
+          return -1;
+        }
+        return 0;
+      });
       return(
         {"label":lastItem, "key":modelPath, "nodes": items}
       );
@@ -532,6 +542,22 @@ export default function Catalog (props) {
       thisSchema.push({"label": data[item].name, "key": data[item].nodeID})
 
       // items[data[item].database].nodes[data[item].schema].nodes[data[item].name] = {"label": data[item].name, "key": data[item].schema}
+    }
+    function sortByLabel(a,b) {
+      if (a.label > b.label) {
+        return 1;
+      }
+      if (a.label < b.label) {
+        return -1;
+      }
+      return 0;
+    }
+    items = items.sort((a, b) => sortByLabel(a,b));
+    for(var itemDB in items) {
+      items[itemDB].nodes = items[itemDB].nodes.sort((a, b) => sortByLabel(a,b));
+      for(var itemDBSchema in items[itemDB].nodes) {
+        items[itemDB].nodes[itemDBSchema].nodes = items[itemDB].nodes[itemDBSchema].nodes.sort((a, b) => sortByLabel(a,b));
+      }
     }
     
     return(items);
