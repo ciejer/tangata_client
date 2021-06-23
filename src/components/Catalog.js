@@ -59,7 +59,7 @@ export default function Catalog (props) {
       if(!response.error) {
         setRawModelTree(response);
         setFolderTree(RecurseFullFolderTree(response));
-        console.log(RecurseFullFolderTree(response));
+        
         
       }
     })
@@ -68,7 +68,7 @@ export default function Catalog (props) {
       if(!response.error) {
         setRawDBTree(response);
         setDBTree(RecurseFullDBTree(response));
-        console.log(RecurseFullDBTree(response));
+        
       }
     })
   }, []);
@@ -211,7 +211,8 @@ export default function Catalog (props) {
       var newTest = {"type": "relationships", "severity": "ERROR", "related_model": model, "related_field": column};
       allTests.push({"relationships": {
         "to": "ref('" + model + "')",
-        "field": column}});
+        "field": column,
+        "severity": "ERROR"}});
       setCatalogModel({
         ...catalogModel,
         columns: {
@@ -229,9 +230,12 @@ export default function Catalog (props) {
         if(catalogModel.columns[newRefTest.column.name].tests[thisTest].type === "relationships") {
           allTests.push({[catalogModel.columns[newRefTest.column.name].tests[thisTest].type]: {
             "to": "ref('" + catalogModel.columns[newRefTest.column.name].tests[thisTest].related_model + "')",
-            "field": catalogModel.columns[newRefTest.column.name].tests[thisTest].related_field}})
+            "field": catalogModel.columns[newRefTest.column.name].tests[thisTest].related_field},
+            "severity": catalogModel.columns[newRefTest.column.name].tests[thisTest].severity.toUpperCase()})
         } else {
-          allTests.push(catalogModel.columns[newRefTest.column.name].tests[thisTest].type)
+          allTests.push({[catalogModel.columns[newRefTest.column.name].tests[thisTest].type]: {
+            "severity": catalogModel.columns[newRefTest.column.name].tests[thisTest].severity.toUpperCase()
+          }})
         } 
       };
       updateMetadataModel({
@@ -356,7 +360,9 @@ export default function Catalog (props) {
             if(testAction.option.value === "unique" || testAction.option.value === "not_null") {
               // TODO: push test to column.tests
               newTest = {"type": testAction.option.value, "severity": "ERROR"};
-              allTests.push(testAction.option.value)
+              allTests.push({[testAction.option.value]: {
+                "severity": "ERROR"
+              }})
               setCatalogModel({
                 ...catalogModel,
                 columns: {
@@ -379,20 +385,23 @@ export default function Catalog (props) {
               if(catalogModel.columns[value[0]].tests[thisTest].type === "relationships") {
                 allTests.push({[catalogModel.columns[value[0]].tests[thisTest].type]: {
                   "to": "ref('" + catalogModel.columns[value[0]].tests[thisTest].related_model + "')",
-                  "field": catalogModel.columns[value[0]].tests[thisTest].related_field}})
+                  "field": catalogModel.columns[value[0]].tests[thisTest].related_field},
+                  "severity": catalogModel.columns[value[0]].tests[thisTest].severity.toUpperCase()})
               } else {
-                allTests.push(catalogModel.columns[value[0]].tests[thisTest].type)
+                allTests.push({[catalogModel.columns[value[0]].tests[thisTest].type]: {
+                  "severity": catalogModel.columns[value[0]].tests[thisTest].severity.toUpperCase()
+                }})
               } 
             }
           } else if(testAction.action === "remove-value") {
             let removeItemIndex = catalogModel.columns[value[0]].tests.indexOf(testAction.removedValue.value);
-            console.log(testAction);
-            console.log(catalogModel.columns[value[0]].tests);
+            
+            
             if(testAction.removedValue.value === 'relationships') {
-              console.log("relationship");
+              
               var newTests = catalogModel.columns[value[0]].tests.filter(thisTest => thisTest.related_model+"."+thisTest.related_field !== testAction.removedValue.label.props.title);
             } else {
-              console.log("other");
+              
               var newTests = catalogModel.columns[value[0]].tests.filter(thisTest => thisTest.type !== testAction.removedValue.value);
             }
             setCatalogModel({
@@ -405,6 +414,22 @@ export default function Catalog (props) {
                 },
               }
             })
+            allTests = [];
+            for(var thisTest in newTests) { //add existing tests to allTests
+              console.log(newTests[thisTest]);
+              console.log(thisTest);
+              if(newTests[thisTest].type === "relationships") {
+                allTests.push({[newTests[thisTest].type]: {
+                  "to": "ref('" + newTests[thisTest].related_model + "')",
+                  "field": newTests[thisTest].related_field,
+                  "severity": newTests[thisTest].severity.toUpperCase()
+                }})
+              } else {
+                allTests.push({[newTests[thisTest].type]: {
+                  "severity": newTests[thisTest].severity.toUpperCase()
+                }})
+              } 
+            }
           }
           updateMetadataModel({
             "column": value[0],
@@ -415,9 +440,9 @@ export default function Catalog (props) {
         const MultiValueContainer = props => {
           function MultiValueClick(e) {
             e.preventDefault();
-            console.log(value[0].toLowerCase());
-            console.log(e.target.textContent);
-            console.log(e.target.title);
+            
+            
+            
             show(e, {
               props: {
                   "column": value[0].toLowerCase(),
@@ -436,48 +461,37 @@ export default function Catalog (props) {
           return null;
         }
         function changeTest({event, props, data, triggerEvent}) {
-          console.log(event);
-          console.log(props);
-          console.log(data);
-          console.log(triggerEvent);
-          console.log(catalogModel);
+          
+          
+          
+          
+          
           var allTests = [];
           let removeItemIndex = catalogModel.columns[props.column].tests.findIndex(function(thisTest) {
             if(props.testType.toLowerCase() === "relationship") {
-              console.log("relationship");
+              
               return thisTest.related_model+"."+thisTest.related_field === props.relatedField;
             } else {
-              console.log("other");
-              return thisTest.type === props.testType.toLowerCase();
+              
+              return thisTest.type === props.testType.toLowerCase().replace(" ","_");
             }
           });
-          console.log(removeItemIndex);
-          console.log(catalogModel.columns[props.column].tests);
-          console.log(props.testType.toLowerCase());
-          console.log(catalogModel.columns[props.column].tests[removeItemIndex]);
+          
+          
+          
+          
           let newTest = Object.assign({}, catalogModel.columns[props.column].tests[removeItemIndex]);
-          console.log(newTest);
+          
           newTest.severity = event.target.innerText.toUpperCase();
-          console.log(newTest);
-          for(var thisTest in catalogModel.columns[value[0]].tests) { //add existing tests to allTests
-            if(catalogModel.columns[value[0]].tests[thisTest].type === "relationships") {
-              allTests.push({[catalogModel.columns[value[0]].tests[thisTest].type]: {
-                "to": "ref('" + catalogModel.columns[value[0]].tests[thisTest].related_model + "')",
-                "field": catalogModel.columns[value[0]].tests[thisTest].related_field}})
-            } else {
-              allTests.push(catalogModel.columns[value[0]].tests[thisTest].type)
-            } 
-          }
-          console.log(catalogModel.columns[props.column].tests);
           // var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase());
           if(props.testType.toLowerCase() === 'relationship') {
-            console.log("relationship");
+            
             var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.related_model+"."+thisTest.related_field !== props.relatedField);
           } else {
-            console.log("other");
-            var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase());
+            
+            var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase().replace(" ","_"));
           }
-          console.log(newTests);
+          
           newTests.push(newTest)
           setCatalogModel({
             ...catalogModel,
@@ -489,6 +503,23 @@ export default function Catalog (props) {
               },
             }
           })
+          for(var thisTest in newTests) { //add existing tests to allTests
+            console.log(newTests[thisTest]);
+            console.log(thisTest);
+            if(newTests[thisTest].type === "relationships") {
+              allTests.push({[newTests[thisTest].type]: {
+                "to": "ref('" + newTests[thisTest].related_model + "')",
+                "field": newTests[thisTest].related_field,
+                "severity": newTests[thisTest].severity.toUpperCase()
+              }})
+            } else {
+              allTests.push({[newTests[thisTest].type]: {
+                "severity": newTests[thisTest].severity.toUpperCase()
+              }})
+            } 
+          }
+          console.log(allTests);
+          console.log(newTests);
           updateMetadataModel({
             "column": props.column,
             "tests": allTests,
@@ -575,7 +606,7 @@ export default function Catalog (props) {
 
   const RecurseFullFolderTree = (data) => {
     var fullResults = [RecurseFolderTree(data,"model","model")].concat([RecurseFolderTree(data,"source","source")]);
-    console.log(fullResults);
+    
     return fullResults;
   }
   const RecurseFolderTree = (data, lastItem, modelPath) => {
@@ -800,7 +831,7 @@ export default function Catalog (props) {
         concatPath += nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length) + "/"
       }
       var currentModelTreeRef = concatPath.slice(0,-1);
-      console.log(currentModelTreeRef);
+      
       return currentModelTreeRef;
     } else return null;
   }
@@ -857,7 +888,7 @@ export default function Catalog (props) {
         if(!response.error) {
           setRawDBTree(response);
           setDBTree(RecurseFullDBTree(response));
-          console.log(RecurseFullDBTree(response));
+          
         }
       })
       return(<div>No Model Found</div>);
@@ -1013,7 +1044,7 @@ export default function Catalog (props) {
     const handleToggle = () => setOpen(!open);
 
     var treeModelClick = (e) => {
-      console.log(e);
+      
       if(e.hasNodes === false) {
         history.push("/catalog/"+e.key.split("/").pop());
       } else {
@@ -1031,7 +1062,7 @@ export default function Catalog (props) {
         for(var thisStep in splitNodeID) {
           openNodes.push(getTreeRef(nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length)))
         }
-        console.log(openNodes);
+        
         return openNodes;
     } else return null;
     }
@@ -1072,7 +1103,7 @@ export default function Catalog (props) {
       </Drawer>
     );
   };
-  console.log(catalogModel);
+  
     return (
       <Container fluid>
         <Row className="flex-xl-nowrap">
