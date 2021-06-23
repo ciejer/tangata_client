@@ -19,6 +19,7 @@
     "react-bootstrap-drawer": "^1.0.0",
     "react-bootstrap-icons": "^1.5.0",
     "react-contenteditable": "^3.3.5",
+    "react-contexify": "^5.0.0",
     "react-dom": "^17.0.1",
     "react-draggable": "^4.4.3",
     "react-flow-renderer": "^9.1.2",

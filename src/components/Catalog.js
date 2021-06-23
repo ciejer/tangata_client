@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HddRackFill, FolderFill, Table } from 'react-bootstrap-icons';
 import {Container, Collapse, Row, Col, Tabs, Tab, Accordion, Card, Button, Modal } from 'react-bootstrap';
+import { Menu, Item, Separator, Submenu, MenuProvider, useContextMenu } from 'react-contexify';
+import 'react-contexify/dist/ReactContexify.css';
 import { Drawer, } from 'react-bootstrap-drawer';
 import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,7 +17,7 @@ import { getModelSearch } from '../services/getModelSearch';
 import ContentEditable from 'react-contenteditable';
 import TreeMenu from 'react-simple-tree-menu';
 import 'react-simple-tree-menu/dist/main.css';
-import Select from 'react-select'
+import Select, { components } from 'react-select'
 import chroma from 'chroma-js';
 import { useHistory } from 'react-router-dom';
 import {
@@ -42,6 +44,8 @@ export default function Catalog (props) {
   const treeFolderRef = useRef();
   const treeDBRef = useRef();
   let { path, url } = useRouteMatch();
+  const TEST_MENU_ID = 'testMenu';
+  const { show } = useContextMenu();
   function catalogDescription()  {
     if(catalogModel.description) {
       return catalogModel.description;
@@ -262,7 +266,7 @@ export default function Catalog (props) {
         const options = [
           { value: 'not_null', label: 'Not Null', "column": value[1].name, "color": "#FF0000"},
           { value: 'unique', label: 'Unique', "column": value[1].name, "color": "#FF0000"},
-          { value: 'relationships', label: 'Relationship', "column": value[1].name, "color": "#FF0000"}
+          { value: Date.now(), label: 'Relationship', "column": value[1].name, "color": "#FF0000"}
         ]
 
         const colourStyles = {
@@ -324,7 +328,7 @@ export default function Catalog (props) {
             if(value[1].tests[thisTest].severity === "ERROR") {
               testSeverityColor = "#FF0000";
             } else if(value[1].tests[thisTest].severity === "WARNING") {
-              testSeverityColor = "#FFFF00";
+              testSeverityColor = "#0000FF";
             }
             if(value[1].tests[thisTest].type === "relationships") {
               testType = "relationships";
@@ -366,7 +370,7 @@ export default function Catalog (props) {
                   },
                 }
               })
-            } else if(testAction.option.value === "relationships") {
+            } else if(testAction.option.label === "Relationship") {
               setNewRefTest({"column": value[1]});
               setCatalogModel(catalogModel);
             }
@@ -382,9 +386,15 @@ export default function Catalog (props) {
             }
           } else if(testAction.action === "remove-value") {
             let removeItemIndex = catalogModel.columns[value[0]].tests.indexOf(testAction.removedValue.value);
-            var newTests = [
-              ...catalogModel.columns[value[0]].tests.slice(0,removeItemIndex), ...catalogModel.columns[value[0]].tests.slice(0,removeItemIndex+1)
-            ];
+            console.log(testAction);
+            console.log(catalogModel.columns[value[0]].tests);
+            if(testAction.removedValue.value === 'relationships') {
+              console.log("relationship");
+              var newTests = catalogModel.columns[value[0]].tests.filter(thisTest => thisTest.related_model+"."+thisTest.related_field !== testAction.removedValue.label.props.title);
+            } else {
+              console.log("other");
+              var newTests = catalogModel.columns[value[0]].tests.filter(thisTest => thisTest.type !== testAction.removedValue.value);
+            }
             setCatalogModel({
               ...catalogModel,
               columns: {
@@ -395,15 +405,6 @@ export default function Catalog (props) {
                 },
               }
             })
-            for(var thisTest in newTests) { //add existing tests to allTests
-              if(newTests[thisTest].type === "relationships") {
-                allTests.push({[newTests[thisTest].type]: {
-                  "to": "ref('" + newTests[thisTest].related_model + "')",
-                  "field": newTests[thisTest].related_field}})
-              } else {
-                allTests.push(newTests[thisTest].type)
-              } 
-            }
           }
           updateMetadataModel({
             "column": value[0],
@@ -411,6 +412,89 @@ export default function Catalog (props) {
             "target": {"dataset": {"metadatafield": "ColumnTest"}}
           });
         };
+        const MultiValueContainer = props => {
+          function MultiValueClick(e) {
+            e.preventDefault();
+            console.log(value[0].toLowerCase());
+            console.log(e.target.textContent);
+            console.log(e.target.title);
+            show(e, {
+              props: {
+                  "column": value[0].toLowerCase(),
+                  "testType": e.target.textContent,
+                  "relatedField": e.target.title
+              }, id: TEST_MENU_ID,
+            })
+          }
+          return (
+            <div onContextMenu={(e) => MultiValueClick(e)}>
+              <components.MultiValueContainer {...props}/>
+            </div>
+          );
+        };
+        const ClearIndicator = props => {
+          return null;
+        }
+        function changeTest({event, props, data, triggerEvent}) {
+          console.log(event);
+          console.log(props);
+          console.log(data);
+          console.log(triggerEvent);
+          console.log(catalogModel);
+          var allTests = [];
+          let removeItemIndex = catalogModel.columns[props.column].tests.findIndex(function(thisTest) {
+            if(props.testType.toLowerCase() === "relationship") {
+              console.log("relationship");
+              return thisTest.related_model+"."+thisTest.related_field === props.relatedField;
+            } else {
+              console.log("other");
+              return thisTest.type === props.testType.toLowerCase();
+            }
+          });
+          console.log(removeItemIndex);
+          console.log(catalogModel.columns[props.column].tests);
+          console.log(props.testType.toLowerCase());
+          console.log(catalogModel.columns[props.column].tests[removeItemIndex]);
+          let newTest = Object.assign({}, catalogModel.columns[props.column].tests[removeItemIndex]);
+          console.log(newTest);
+          newTest.severity = event.target.innerText.toUpperCase();
+          console.log(newTest);
+          for(var thisTest in catalogModel.columns[value[0]].tests) { //add existing tests to allTests
+            if(catalogModel.columns[value[0]].tests[thisTest].type === "relationships") {
+              allTests.push({[catalogModel.columns[value[0]].tests[thisTest].type]: {
+                "to": "ref('" + catalogModel.columns[value[0]].tests[thisTest].related_model + "')",
+                "field": catalogModel.columns[value[0]].tests[thisTest].related_field}})
+            } else {
+              allTests.push(catalogModel.columns[value[0]].tests[thisTest].type)
+            } 
+          }
+          console.log(catalogModel.columns[props.column].tests);
+          // var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase());
+          if(props.testType.toLowerCase() === 'relationship') {
+            console.log("relationship");
+            var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.related_model+"."+thisTest.related_field !== props.relatedField);
+          } else {
+            console.log("other");
+            var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase());
+          }
+          console.log(newTests);
+          newTests.push(newTest)
+          setCatalogModel({
+            ...catalogModel,
+            columns: {
+              ...catalogModel.columns,
+              [props.column]: {
+                ...catalogModel.columns[props.column],
+                tests: newTests
+              },
+            }
+          })
+          updateMetadataModel({
+            "column": props.column,
+            "tests": allTests,
+            "target": {"dataset": {"metadatafield": "ColumnTest"}}
+          });
+        }
         return(
           <tr key={"columnRow"+value[0]}>
             <td className="catalogColumnName">
@@ -438,8 +522,14 @@ export default function Catalog (props) {
                 onChange={testChanged}
                 styles={colourStyles}
                 menuPortalTarget={document.body}
+                openMenuOnClick={false}
+                components={{ MultiValueContainer, ClearIndicator }}
               />
             </td>
+            <Menu id={"testMenu"}>
+              <Item id="setError" onClick={changeTest}>Error</Item>
+              <Item id="setWarning" onClick={changeTest}>Warning</Item>
+            </Menu>
           </tr>
         );
       });
@@ -982,7 +1072,7 @@ export default function Catalog (props) {
       </Drawer>
     );
   };
-
+  console.log(catalogModel);
     return (
       <Container fluid>
         <Row className="flex-xl-nowrap">
