@@ -6,6 +6,7 @@ import { postLoginUser } from "../services/postLoginUser";
 import { postRegisterUser } from "../services/postRegisterUser";
 import { refreshMetadata } from "../services/refreshMetadata";
 import { getUserConfig } from "../services/getUserConfig";
+import { getServerConfig } from "../services/getServerConfig";
 import { useHistory } from 'react-router-dom';
 // import "./Login.css";
 
@@ -55,6 +56,11 @@ export default function Login(props) {
         getUserConfig(response.user)
           .then(response => {
             props.setUserConfig(response.user);
+          }
+        );
+        getServerConfig(response.user)
+          .then(response => {
+            props.setServerConfig(response.user);
           }
         );
       }

@@ -2,6 +2,7 @@ import {Button, Form, Tabs, Tab, TabContainer } from 'react-bootstrap';
 import React, { useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { postUserConfig } from "../services/postUserConfig";
+import { postServerConfig } from "../services/postServerConfig";
 import { postFileUpload } from "../services/postFileUpload";
 import { refreshMetadata } from "../services/refreshMetadata";
 import { getDBTCloudAccounts } from "../services/getDBTCloudAccounts";
@@ -27,12 +28,20 @@ export default function Config(props) {
 
 
   // console.log(props.userConfig);
-  
+  console.log(props.serverConfig);
+
   function updateConfigValue(newValue, updatedField) {
     var newConfig = {...props.userConfig};
     newConfig[updatedField] = newValue;
     props.setUserConfig(newConfig);
     postUserConfig(props.user, newConfig);
+  }
+  
+  function updateServerConfigValue(newValue, updatedField) {
+    var newServerConfig = {...props.serverConfig};
+    newServerConfig[updatedField] = newValue;
+    props.setServerConfig(newServerConfig);
+    postServerConfig(props.user, newServerConfig);
   }
 
   function uploadFile(uploadedFiles, uploadType) {
@@ -165,8 +174,8 @@ export default function Config(props) {
   return (
     <div className="container mt-3">
       <h1>Config</h1>
-      <Tabs defaultActiveKey="userdetails" id="config">
-        <Tab eventKey="userdetails" title="User Details" className="border-right border-left border-bottom p-3">
+      <Tabs defaultActiveKey={props.hostVersion === 'python' ? "modelPromotion" : "userdetails"} id="config">
+        <Tab eventKey="userdetails" title="User Details" className="border-right border-left border-bottom p-3" tabClassName={props.hostVersion === 'python' ? 'd-none' : ''}>
           <Form>
             {/* <Form.Group size="lg" controlId="loginEmail"> //let's not change email addresses for now.
               <Form.Label>Email</Form.Label>
@@ -197,7 +206,7 @@ export default function Config(props) {
             </Form.Group>
           </Form>
         </Tab>
-        <Tab eventKey="gitConfig" title="Git Config" className="border-right border-left border-bottom p-3">
+        <Tab eventKey="gitConfig" title="Git Config" className="border-right border-left border-bottom p-3" tabClassName={props.hostVersion === 'python' ? 'd-none' : ''}>
           <Form>
             <Form.Group size="lg" controlId="gitSSHKey">
               <Form.Label>SSH Key</Form.Label>
@@ -268,7 +277,7 @@ export default function Config(props) {
               </Button>
           </Form>
         </Tab>
-        <Tab eventKey="dbtConfig" title="DBT Config" className="border-right border-left border-bottom p-3">
+        <Tab eventKey="dbtConfig" title="DBT Config" className="border-right border-left border-bottom p-3" tabClassName={props.hostVersion === 'python' ? 'd-none' : ''}>
           <Form>
             <Form.Group size="lg" controlId="dbtConfigMethod">
               <Form.Label>dbt_ Config Method</Form.Label>
@@ -384,6 +393,72 @@ export default function Config(props) {
               {dbtAccountsSelect()}
               {dbtDocsJobsSelect()}
             </div>
+          </Form>
+        </Tab>
+        <Tab eventKey="modelPromotion" title="Model Promotion" className="border-right border-left border-bottom p-3" tabClassName={props.hostVersion !== 'python' ? 'd-none' : ''}>
+        {/* TODO: Add Node config for this */}
+          <Form>
+            <Form.Group size="lg" controlId="promotion_tag">
+              <Form.Label>Promotion Tag</Form.Label>
+              <Form.Control
+                autoFocus
+                type="text"
+                defaultValue={props.serverConfig.promotion_tag}
+                onChange={(e) => updateServerConfigValue(e.target.value, "promotion_tag")}
+              />
+              <Form.Text id="promotionTagHelpBlock" muted>
+                This tag will be used in your dbt repository for models you promote in Tāngata. These models will be highlighted in search.
+              </Form.Text>
+            </Form.Group>
+            <Form.Group size="lg" controlId="demotion_tag">
+              <Form.Label>Demotion Tag</Form.Label>
+              <Form.Control
+                autoFocus
+                type="text"
+                defaultValue={props.serverConfig.demotion_tag}
+                onChange={(e) => updateServerConfigValue(e.target.value, "demotion_tag")}
+              />
+              <Form.Text id="demotionTagHelpBlock" muted>
+                This tag will be used in your dbt repository for models you demote in Tāngata. These models will be dimmed in search, and will appear after other results.
+              </Form.Text>
+            </Form.Group>
+          </Form>
+        </Tab>
+        <Tab eventKey="yamlConfig" title="YAML Config" className="border-right border-left border-bottom p-3" tabClassName={props.hostVersion !== 'python' ? 'd-none' : ''}>
+        {/* TODO: Add Node config for this */}
+          <Form>
+            <Form.Group size="lg" controlId="newYAMLNaming">
+              <Form.Label>New YAML file behaviour</Form.Label>
+              <div key={'custom-inline-radio'} className="mb-3">
+                <Form.Check
+                  custom
+                  inline
+                  label="One YAML per folder, named foldername.yml"
+                  type='radio'
+                  id={'file_per_folder__folder_name'}
+                  checked={props.serverConfig.schema_file_settings==="file_per_folder__folder_name"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("file_per_folder__folder_name", "schema_file_settings")}}
+                />
+                <Form.Check
+                  custom
+                  inline
+                  label="One YAML per folder, named schema.yml"
+                  type='radio'
+                  id={'file_per_folder__schema_yml'}
+                  checked={props.serverConfig.schema_file_settings==="file_per_folder__schema_yml"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("file_per_folder__schema_yml", "schema_file_settings")}}
+                />
+                <Form.Check
+                  custom
+                  inline
+                  label="One YAML per model, named modelname.yml"
+                  type='radio'
+                  id={'file_per_model__model_name'}
+                  checked={props.serverConfig.schema_file_settings==="file_per_model__model_name"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("file_per_model__model_name", "schema_file_settings")}}
+                />
+              </div>
+            </Form.Group>
           </Form>
         </Tab>
         {/* <Tab eventKey="password" title="Change Password" className="border-right border-left border-bottom p-3">

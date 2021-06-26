@@ -26,11 +26,9 @@ export const NavBar = ({addModel, hostVersion, logState, openSQLPanel, openModel
         } else return null;
     }
     const config = (hostVersion, createPR) => {
-        if ( hostVersion === 'node') {
-            return(
-                <div className={"nav-item nav-link bg-brand "+(history.location.pathname.includes("/config")?"active":null)} role="button" onClick={() => history.push("/config")}>Config</div>
-                );
-        } else return null;
+        return(
+            <div className={"nav-item nav-link bg-brand "+(history.location.pathname.includes("/config")?"active":null)} role="button" onClick={() => history.push("/config")}>Config</div>
+            );
     }
 
     const searchBox = useRef(null);

@@ -412,3 +412,16 @@ button.btn-primary.tealButton:not(:disabled):active { /*This has to be this spec
   margin-right: 0.3rem;
   color:transparent;
 }
+
+.demote {
+  color: grey;
+}
+
+.promote svg, .demote svg {
+  background-color: white;
+  border-radius: 4px;
+}
+
+.catalog_title_promotion {
+  display: inline;
+}

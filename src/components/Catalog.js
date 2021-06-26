@@ -416,8 +416,6 @@ export default function Catalog (props) {
             })
             allTests = [];
             for(var thisTest in newTests) { //add existing tests to allTests
-              console.log(newTests[thisTest]);
-              console.log(thisTest);
               if(newTests[thisTest].type === "relationships") {
                 allTests.push({[newTests[thisTest].type]: {
                   "to": "ref('" + newTests[thisTest].related_model + "')",
@@ -448,7 +446,7 @@ export default function Catalog (props) {
                   "column": value[0].toLowerCase(),
                   "testType": e.target.textContent,
                   "relatedField": e.target.title
-              }, id: TEST_MENU_ID,
+              }, id: "testTypeMenu",
             })
           }
           return (
@@ -461,11 +459,6 @@ export default function Catalog (props) {
           return null;
         }
         function changeTest({event, props, data, triggerEvent}) {
-          
-          
-          
-          
-          
           var allTests = [];
           let removeItemIndex = catalogModel.columns[props.column].tests.findIndex(function(thisTest) {
             if(props.testType.toLowerCase() === "relationship") {
@@ -476,12 +469,7 @@ export default function Catalog (props) {
               return thisTest.type === props.testType.toLowerCase().replace(" ","_");
             }
           });
-          
-          
-          
-          
           let newTest = Object.assign({}, catalogModel.columns[props.column].tests[removeItemIndex]);
-          
           newTest.severity = event.target.innerText.toUpperCase();
           // var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase());
           if(props.testType.toLowerCase() === 'relationship') {
@@ -491,7 +479,6 @@ export default function Catalog (props) {
             
             var newTests = catalogModel.columns[props.column].tests.filter(thisTest => thisTest.type !== props.testType.toLowerCase().replace(" ","_"));
           }
-          
           newTests.push(newTest)
           setCatalogModel({
             ...catalogModel,
@@ -504,8 +491,6 @@ export default function Catalog (props) {
             }
           })
           for(var thisTest in newTests) { //add existing tests to allTests
-            console.log(newTests[thisTest]);
-            console.log(thisTest);
             if(newTests[thisTest].type === "relationships") {
               allTests.push({[newTests[thisTest].type]: {
                 "to": "ref('" + newTests[thisTest].related_model + "')",
@@ -518,8 +503,6 @@ export default function Catalog (props) {
               }})
             } 
           }
-          console.log(allTests);
-          console.log(newTests);
           updateMetadataModel({
             "column": props.column,
             "tests": allTests,
@@ -557,7 +540,7 @@ export default function Catalog (props) {
                 components={{ MultiValueContainer, ClearIndicator }}
               />
             </td>
-            <Menu id={"testMenu"}>
+            <Menu id={"testTypeMenu"}>
               <Item id="setError" onClick={changeTest}>Error</Item>
               <Item id="setWarning" onClick={changeTest}>Warning</Item>
             </Menu>
@@ -604,6 +587,32 @@ export default function Catalog (props) {
     };
   }
 
+  function promoteIcon() {
+    return(
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-patch-check" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M10.354 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+        <path d="m10.273 2.513-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>
+      </svg>
+    )
+  }
+
+  function demoteIcon() {
+      return(
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-patch-exclamation" viewBox="0 0 16 16">
+          <path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0L7.1 4.995z"/>
+          <path d="m10.273 2.513-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>
+        </svg>
+      )
+  }
+  function noPromotionIcon() {
+      return(
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="blue" class="bi bi-patch-minus" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M5.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>
+          <path d="m10.273 2.513-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>
+        </svg>
+      )
+  }
+
   const RecurseFullFolderTree = (data) => {
     var fullResults = [RecurseFolderTree(data,"model","model")].concat([RecurseFolderTree(data,"source","source")]);
     
@@ -647,11 +656,21 @@ export default function Catalog (props) {
   }
   const PopulateDBTree = (data) => {
     var items = [];
+
     
+
+    function modelLabel(modelName, promoteStatus) {
+        return(
+          <div className={(promoteStatus===1?" promote":(promoteStatus===-1?" demote":""))}>
+            {modelName} {promoteStatus===1?promoteIcon():(promoteStatus===-1?demoteIcon():"")}
+          </div>
+        )
+    }
     for(var item in data) {
       
-      if(items.filter(function(e) { return e.label === data[item].database}).length === 0 || items.filter(function(e) { return e.label === data[item].database})[0].length===0) {
-        items.push({"label": data[item].database, "key": data[item].database, "nodes": []});
+      if(items.filter(function(e) {return e.label === data[item].database}).length === 0 ||
+        items.filter(function(e) { return e.label === data[item].database})[0].length===0) {
+          items.push({"label": data[item].database, "key": data[item].database, "nodes": []});
       }
       
       
@@ -660,7 +679,7 @@ export default function Catalog (props) {
         thisDB.push({"label": data[item].schema, "key": data[item].schema, "nodes": []})
       }
       var thisSchema = thisDB.filter(function(e) { return e.key === data[item].schema})[0].nodes;
-      thisSchema.push({"label": data[item].name, "key": data[item].nodeID})
+      thisSchema.push({"label": modelLabel(data[item].name, data[item].promote_status), "key": data[item].nodeID})
 
       // items[data[item].database].nodes[data[item].schema].nodes[data[item].name] = {"label": data[item].name, "key": data[item].schema}
     }
@@ -680,12 +699,13 @@ export default function Catalog (props) {
         items[itemDB].nodes[itemDBSchema].nodes = items[itemDB].nodes[itemDBSchema].nodes.sort((a, b) => sortByLabel(a,b));
       }
     }
-    
     return(items);
   };
 
   function updateMetadataModel (e) {
     var metadataBody = {};
+    var newTags = [];
+    var newTagsWithPromotion = [];
     switch(e.target.dataset.metadatafield) {
       case "Description":
         metadataBody = {
@@ -702,10 +722,13 @@ export default function Catalog (props) {
           "description": e.target.innerText
         });
       break;
-      case "Tags":
-        if(e.target.innerText === "None") {
-          metadataBody = null;
-          break;
+      case "Promotion":
+        newTags = [...catalogModel.tags];
+        newTagsWithPromotion = [...newTags];
+        if(e.newPromotionStatus===1) {
+          newTagsWithPromotion.push(props.serverConfig.promotion_tag)
+        } else if(e.newPromotionStatus===-1) {
+          newTagsWithPromotion.push(props.serverConfig.demotion_tag)
         }
         metadataBody = {
           "updateMethod": "yamlModelTags",
@@ -714,15 +737,39 @@ export default function Catalog (props) {
           "model": catalogModel.name,
           "node_id": catalogModel.nodeID,
           "property_name": "tags",
-          "new_value": e.target.innerText.split(',').map(function(item) { // Split tags by commas, and remove any spaces if any
-              return item.trim();
-            }),
+          "new_value": newTagsWithPromotion,
         }
         setCatalogModel({
           ...catalogModel,
-          "tags": e.target.innerText.split(',').map(function(item) { // Split tags by commas, and remove any spaces if any
-            return item.trim();
-          })
+          "promote_status": e.newPromotionStatus
+        });
+      break;
+      case "Tags":
+        if(e.target.innerText === "None") {
+          metadataBody = null;
+          break;
+        }
+        newTags = e.target.innerText.split(',').map(function(item) { // Split tags by commas, and remove any spaces if any
+          return item.trim();
+        });
+        newTagsWithPromotion = [...newTags];
+        if(catalogModel.promote_status===1) {
+          newTagsWithPromotion.push(props.serverConfig.promotion_tag)
+        } else if(catalogModel.promote_status===-1) {
+          newTagsWithPromotion.push(props.serverConfig.demotion_tag)
+        }
+        metadataBody = {
+          "updateMethod": "yamlModelTags",
+          "yaml_path": catalogModel.yaml_path,
+          "model_path": catalogModel.model_path,
+          "model": catalogModel.name,
+          "node_id": catalogModel.nodeID,
+          "property_name": "tags",
+          "new_value": newTagsWithPromotion,
+        }
+        setCatalogModel({
+          ...catalogModel,
+          "tags": newTags
         });
       break;
       case "ColumnDescription":
@@ -893,14 +940,35 @@ export default function Catalog (props) {
       })
       return(<div>No Model Found</div>);
     }
+    function showPromotionMenu(e) {
+      e.preventDefault();
+      show(e, {
+        props: {
+        }, id: "promotionMenu",
+      })
+    }
 
+    function setModelPromotion({event, props, data, triggerEvent}) {
+      var newPromotionStatus = 0;
+      if(event.target.innerText === "Promote") {
+        newPromotionStatus = 1;
+      } else if(event.target.innerText === "Demote") {
+        newPromotionStatus = -1;
+      }
+      updateMetadataModel({
+        "newPromotionStatus": newPromotionStatus,
+        "target": {"dataset": {"metadatafield": "Promotion"}}
+      });
+    }
     
     const tags = catalogModel.tags.length>0?catalogModel.tags.join(", "):null
     return(
       <Container className="catalogContainer display-block">
         <div className="row justify-content-md-left">
           <div className="col col-md-auto pr-md-3">
-            <h3 className="mb-md-0">{catalogModel.name.toLowerCase()}</h3>
+            <h3 className="mb-md-0">
+              {catalogModel.name.toLowerCase()} <div className="catalog_title_promotion" onContextMenu={(e) => showPromotionMenu(e)}>{catalogModel.promote_status===1?promoteIcon():(catalogModel.promote_status===-1?demoteIcon():noPromotionIcon())}</div>
+            </h3>
           </div>
           <div className="col font-italic align-self-end pl-md-0">
             {catalogModel.materialization}
@@ -1034,6 +1102,11 @@ export default function Catalog (props) {
           </Card>
         </Accordion>
         <AddRefTest/>
+        <Menu id={"promotionMenu"}>
+          <Item id="promote_model" onClick={setModelPromotion}>Promote</Item>
+          <Item id="remove_promotion" onClick={setModelPromotion}>Default</Item>
+          <Item id="demote_model" onClick={setModelPromotion}>Demote</Item>
+        </Menu>
       </Container>
     )
   }

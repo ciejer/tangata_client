@@ -21,6 +21,7 @@ import { NavBar } from './components/NavBar';
 import Catalog from './components/Catalog';
 import { getSSH } from "./services/getSSH";
 import { getUserConfig } from "./services/getUserConfig";
+import { getServerConfig } from "./services/getServerConfig";
 import { getGenerateSSH } from "./services/getGenerateSSH";
 import { getOpenGit } from "./services/getOpenGit";
 import { getCheckDBTConnection } from "./services/getCheckDBTConnection";
@@ -37,6 +38,12 @@ class App extends Component {
       // console.log('python')
       hostVersion = 'python'
       tempUser = {"token":""}
+      console.log("Getting Server Config")
+      getServerConfig(tempUser)
+        .then(response => {
+          console.log("Received Server Config")
+          this.setState({"serverConfig": response})
+        });
     } else {
       // console.log('node')
       hostVersion = 'node'
@@ -64,6 +71,7 @@ class App extends Component {
       sshKey: "",
       user: tempUser,
       userConfig: {},
+      serverConfig: {},
       userMessages: []
     };
   }
@@ -164,6 +172,9 @@ class App extends Component {
   }
   setUserConfig = (newUserConfig) => {
     this.setState({"userConfig": newUserConfig})
+  }
+  setServerConfig = (newServerConfig) => {
+    this.setState({"serverConfig": newServerConfig})
   }
 
   setSSHKey = () => {
@@ -278,6 +289,7 @@ class App extends Component {
               <Login
                 setUser={this.setUser}
                 setUserConfig={this.setUserConfig}
+                setServerConfig={this.setServerConfig}
                 user={this.state.user}
                 appState={this.state.appState}
               />
@@ -306,6 +318,7 @@ class App extends Component {
                   catalogModel={this.state.catalogModel}
                   selectModel={this.selectModel}
                   user={this.state.user}
+                  serverConfig={this.state.serverConfig}
                   hostVersion={this.state.hostVersion}
                 />
               </div>
@@ -331,8 +344,11 @@ class App extends Component {
                 <Config
                   appState={this.state.appState}
                   user={this.state.user}
+                  hostVersion={this.state.hostVersion}
                   userConfig={this.state.userConfig}
                   setUserConfig={this.setUserConfig}
+                  serverConfig={this.state.serverConfig}
+                  setServerConfig={this.setServerConfig}
                   sshKey={this.state.sshKey}
                   setSSHKey={this.setSSHKey}
                   generateSSHKey={this.generateSSHKey}
