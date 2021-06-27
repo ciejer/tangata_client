@@ -612,10 +612,24 @@ export default function Catalog (props) {
         </svg>
       )
   }
+  function modelLabel(modelName, promoteStatus) {
+      return(
+        <div className={(promoteStatus===1?" promote":(promoteStatus===-1?" demote":""))}>
+          {modelName} {promoteStatus===1?promoteIcon():(promoteStatus===-1?demoteIcon():"")}
+        </div>
+      )
+  }
+  
+  function findFolderTreeNode(arr) { //loop through folder tree to find current model
+    return arr.reduce((a, item) => {
+      if (a) return a;
+      if (item.key === catalogModel.nodeID) return item;
+      if (item.nodes) return findFolderTreeNode(item.nodes);
+    }, null);
+  }
 
   const RecurseFullFolderTree = (data) => {
-    var fullResults = [RecurseFolderTree(data,"model","model")].concat([RecurseFolderTree(data,"source","source")]);
-    
+    var fullResults = [RecurseFolderTree(data,"models","models")].concat([RecurseFolderTree(data,"sources","sources")]);
     return fullResults;
   }
   const RecurseFolderTree = (data, lastItem, modelPath) => {
@@ -626,9 +640,11 @@ export default function Catalog (props) {
     } else {
       loopVar = data;
     }
-    if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0) {
+    if(Object.keys(loopVar) && Object.keys(loopVar) && Object.keys(loopVar).length > 0 && (Object.keys(loopVar).length > 2 || !loopVar.nodeID)) {
       for(var item in loopVar) {
-        items.push(RecurseFolderTree(loopVar, item, modelPath + "." + item));
+        if(item !== 'nodeID' && item !== 'promote_status') {
+          items.push(RecurseFolderTree(loopVar, item, modelPath + "." + item));
+        }
       };
       items = items.sort(function(a, b) {
         if (a.label > b.label) {
@@ -644,7 +660,7 @@ export default function Catalog (props) {
       );
     } else {
       return(
-        {"label":lastItem, "key":modelPath}
+        {"label":modelLabel(lastItem, loopVar.promote_status), "key":loopVar.nodeID}
       );
     };
   };
@@ -659,13 +675,6 @@ export default function Catalog (props) {
 
     
 
-    function modelLabel(modelName, promoteStatus) {
-        return(
-          <div className={(promoteStatus===1?" promote":(promoteStatus===-1?" demote":""))}>
-            {modelName} {promoteStatus===1?promoteIcon():(promoteStatus===-1?demoteIcon():"")}
-          </div>
-        )
-    }
     for(var item in data) {
       
       if(items.filter(function(e) {return e.label === data[item].database}).length === 0 ||
@@ -743,6 +752,18 @@ export default function Catalog (props) {
           ...catalogModel,
           "promote_status": e.newPromotionStatus
         });
+        var newDBTree = [...dbTree]
+        var thisTreeNode = newDBTree.filter(node => node.key === catalogModel.database)[0].nodes.filter(node => node.key === catalogModel.schema)[0].nodes.filter(node => node.key === catalogModel.nodeID)[0]
+        thisTreeNode.label = modelLabel(catalogModel.name, e.newPromotionStatus);
+        setDBTree(newDBTree);
+        var newFolderTree = [...folderTree]
+
+        var thisFolderTreeNode = findFolderTreeNode(newFolderTree)
+        thisFolderTreeNode.label = modelLabel(catalogModel.name, e.newPromotionStatus);
+        setDBTree(newDBTree);
+
+        
+        // setDBTree()
       break;
       case "Tags":
         if(e.target.innerText === "None") {
@@ -869,17 +890,76 @@ export default function Catalog (props) {
     }
   
   }
+
+  function treePath(nodeID) {
+    let last;
+    let arrayPath = []
+    if(catalogModel.model_type === "node" && nodeID === catalogModel.nodeID) {
+      let modelPath = catalogModel.model_path.replaceAll('\\','/');
+      let obj = modelPath.substr(0,modelPath.lastIndexOf(('.'))).split('/').reduce((o, val) => {
+        if (typeof last == 'object') {
+          last = last[val] = {};
+          arrayPath.push(val)
+        } else {
+          last = o[val] = {};
+          arrayPath.push(val)
+        }
+      
+        return o;
+      }, {});
+    } else if(catalogModel.model_type === "source" && nodeID === catalogModel.nodeID) {
+      var removedProjectName = nodeID.split('.');
+      removedProjectName.splice(1,1);
+      removedProjectName[0] = 'sources'
+      let obj = removedProjectName.reduce((o, val) => {
+        if (typeof last == 'object') {
+          last = last[val] = {};
+          arrayPath.push(val)
+        } else {
+          last = o[val] = {};
+          arrayPath.push(val)
+        }
+      
+        return o;
+      }, {});
+    } else if(nodeID !== catalogModel.nodeID) {
+      var removedProjectName = nodeID.split('.');
+      let obj = removedProjectName.reduce((o, val) => {
+        if (typeof last == 'object') {
+          last = last[val] = {};
+          arrayPath.push(val)
+        } else {
+          last = o[val] = {};
+          arrayPath.push(val)
+        }
+      
+        return o;
+      }, {});
+    }
+    return arrayPath; 
+  }
   
   function getTreeRef(nodeID) {
     if(nodeID) {
-      var concatPath = "";
-      var splitNodeID = nodeID.split(".")
-      for(var thisStep in splitNodeID) {
-        concatPath += nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length) + "/"
+      var modelPath = treePath(nodeID);
+      var runningFullModel = false;
+      if(modelPath[modelPath.length-1] === catalogModel.name) {
+        modelPath.pop(); //remove last key, we'll add that manually
+        runningFullModel = true;
       }
-      var currentModelTreeRef = concatPath.slice(0,-1);
-      
-      return currentModelTreeRef;
+      var strPath = modelPath[0] + "/";
+      var pathSoFar = modelPath[0] + ".";
+      modelPath.splice(0,1); //remove first key, we'll add that manually
+      for(var thisModel in modelPath) {
+        strPath += pathSoFar + modelPath[thisModel] + "/";
+        pathSoFar += thisModel + ".";
+      }
+      if(runningFullModel) {
+        strPath += nodeID;
+      } else {
+        strPath = strPath.slice(0,-1);
+      }
+      return strPath; //sources/sources.public/source.my_new_project.public.actor
     } else return null;
   }
 
@@ -1129,14 +1209,19 @@ export default function Catalog (props) {
     };
 
     function currentOpenNodes(nodeID) {
+      var splitNodeID = []
+      var thisStep = {}
+      var openNodes = []
       if(nodeID) {
-        var openNodes = [];
-        var splitNodeID = nodeID.split(".")
-        for(var thisStep in splitNodeID) {
-          openNodes.push(getTreeRef(nodeID.substring(0,nodeID.indexOf(splitNodeID[thisStep])+splitNodeID[thisStep].length)))
-        }
-        
-        return openNodes;
+      splitNodeID = treePath(nodeID);
+      var stepsSoFar = splitNodeID[0];
+      openNodes.push(splitNodeID[0]);
+      splitNodeID.splice(0,1);
+      for(thisStep in splitNodeID) {
+        openNodes.push(getTreeRef(stepsSoFar+"."+splitNodeID[thisStep]))
+        stepsSoFar += "."+splitNodeID[thisStep]
+      }
+      return openNodes;
     } else return null;
     }
     return (
