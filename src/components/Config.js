@@ -459,6 +459,29 @@ export default function Config(props) {
                 />
               </div>
             </Form.Group>
+            <Form.Group size="lg" controlId="plusForTags">
+              <Form.Label>Use + as tags prefix in dbt_project.yml</Form.Label>
+              <div key={'custom-inline-radio'} className="mb-3">
+                <Form.Check
+                  custom
+                  inline
+                  label="Use '+tags' in dbt_project.yml"
+                  type='radio'
+                  id={'plus_for_tags'}
+                  checked={props.serverConfig.use_plus_for_tags==="true"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("true", "use_plus_for_tags")}}
+                />
+                <Form.Check
+                  custom
+                  inline
+                  label="Use 'tags' in dbt_project.yml"
+                  type='radio'
+                  id={'no_plus_for_tags'}
+                  checked={props.serverConfig.use_plus_for_tags==="false"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("false", "use_plus_for_tags")}}
+                />
+              </div>
+            </Form.Group>
           </Form>
         </Tab>
         {/* <Tab eventKey="password" title="Change Password" className="border-right border-left border-bottom p-3">
