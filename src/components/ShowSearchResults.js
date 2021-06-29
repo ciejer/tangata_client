@@ -86,11 +86,18 @@ export default class ShowSearchResults extends Component {
         var AllSearchRows = () => {
         // console.log(searchResults);
             if(searchResults.results.length===0) {
+                function noResults() {
+                    if(searchResults.searchString==="promoted") {
+                        return(<>No Promoted Models.<br/>Promote models in the catalog to add to this list.</>)
+                    } else {
+                        return(<>No search results</>)
+                    }
+                }
             return(
                 <div className="container searchbox z-200">
                 <Row>
                     <Col>
-                    <h5 className="text-center">No search results</h5>
+                        <span className="text-center">{noResults()}</span>
                     </Col>
                 </Row>
                     
@@ -98,11 +105,19 @@ export default class ShowSearchResults extends Component {
             );
             }
             const allSearchRows = searchResults.results.map((searchResult, index) => searchRow(searchResult, index));
+            
+            function resultCount() {
+                if(searchResults.searchString==="promoted") {
+                    return(<></>)
+                } else {
+                    return(<>{searchResults.results.length} search results:</>)
+                }
+            }
             return(
                     <div className="container searchbox z-200">
                     <Row>
                         <Col>
-                        <h5 className="text-center">{searchResults.results.length} search results:</h5>
+                            <div className="text-center">{resultCount()}</div>
                         </Col>
                     </Row>
                         {allSearchRows}

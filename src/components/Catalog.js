@@ -339,10 +339,10 @@ export default function Catalog (props) {
               testLabel = (<span title={value[1].tests[thisTest].related_model + "." + value[1].tests[thisTest].related_field}>Relationship</span>);
             } else if(value[1].tests[thisTest].type === "not_null") {
               testType = "not_null";
-              testLabel = "Not Null";
+              testLabel = (<span title={"Column value must not be Null. Click to change test severity."}>Not Null</span>);
             } else if(value[1].tests[thisTest].type === "unique") {
               testType = "unique";
-              testLabel = "Unique";
+              testLabel = (<span title={"Column value must be unique. Click to change test severity."}>Unique</span>);
             }
             currentTests.push({"value": testType, "label": testLabel, "color": testSeverityColor})
           }
@@ -450,7 +450,7 @@ export default function Catalog (props) {
             })
           }
           return (
-            <div onContextMenu={(e) => MultiValueClick(e)}>
+            <div style={{"cursor":"pointer"}} onContextMenu={(e) => MultiValueClick(e)} onClick={(e) => MultiValueClick(e)}>
               <components.MultiValueContainer {...props}/>
             </div>
           );
@@ -993,6 +993,57 @@ export default function Catalog (props) {
     } 
   }
 
+  function LandingPage() {
+    function PromotedModels() {
+      let searchQuery = "promoted";
+      if(searchResults && searchResults.searchString === searchQuery) {
+        var selectSearchResult = (e,index) => {
+            history.push("/catalog/"+searchResults.results[index].nodeID);
+        }
+        return(
+          <>
+            <ShowSearchResults
+              searchResults = {searchResults}
+              resultSelectFunction = {selectSearchResult}
+            />
+          </>
+        )
+        
+      } else {
+        getModelSearch(searchQuery, props.user)
+        .then(response => {
+          // 
+          if(response.length===0 || response.error) {
+            setSearchResults([]);
+            return null;
+          }
+          if(response.searchString === searchQuery) {
+            //searchQuery and router don't update fast enough; only current url does
+            setSearchResults(response);
+          };
+        });
+        return(<div>Loading Promoted Queries...</div>)
+      } 
+    }
+    return(
+      <Container>
+        <Card style={{ width: '24rem', marginTop: '30px' }}>
+          <Card.Header>
+            Promoted
+          </Card.Header>
+          <Card.Body>
+            <Card.Title>
+              Models promoted for general use:
+            </Card.Title>
+            <Card.Text>
+              <PromotedModels/>
+            </Card.Text>
+          </Card.Body>
+        </Card>
+      </Container>
+    )
+  }
+
   function CatalogPage() {
     let { catalogPage } = useParams();
     
@@ -1047,7 +1098,7 @@ export default function Catalog (props) {
         <div className="row justify-content-md-left">
           <div className="col col-md-auto pr-md-3">
             <h3 className="mb-md-0">
-              {catalogModel.name.toLowerCase()} <div className="catalog_title_promotion" onContextMenu={(e) => showPromotionMenu(e)}>{catalogModel.promote_status===1?promoteIcon():(catalogModel.promote_status===-1?demoteIcon():noPromotionIcon())}</div>
+              {catalogModel.name.toLowerCase()} <div style={{"cursor":"pointer"}} title={(catalogModel.promote_status===1?'Promoted as a reliable dataset for use. ':(catalogModel.promote_status===-1?'Demoted - not for general use. ':'Not yet promoted. ')) + 'Click to change.'} className="catalog_title_promotion" onClick={(e) => showPromotionMenu(e)} onContextMenu={(e) => showPromotionMenu(e)}>{catalogModel.promote_status===1?promoteIcon():(catalogModel.promote_status===-1?demoteIcon():noPromotionIcon())}</div>
             </h3>
           </div>
           <div className="col font-italic align-self-end pl-md-0">
@@ -1269,7 +1320,7 @@ export default function Catalog (props) {
           <Col>
             <Switch>
               <Route exact path = {path}>
-                
+                <LandingPage/>
               </Route>
               <Route path={`${path}/search/:searchQuery`}>
                 <SearchPage/>
