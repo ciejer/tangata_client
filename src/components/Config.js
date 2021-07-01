@@ -482,6 +482,29 @@ export default function Config(props) {
                 />
               </div>
             </Form.Group>
+            <Form.Group size="lg" controlId="reorderSchemaYml">
+              <Form.Label>Reorder all yml files alphabetically</Form.Label>
+              <div key={'custom-inline-radio'} className="mb-3">
+                <Form.Check
+                  custom
+                  inline
+                  label="Order schema.yml, sources.yml and dbt_project.yml models alphabetically"
+                  type='radio'
+                  id={'reorder_yml'}
+                  checked={props.serverConfig.order_schema_yml_by_name==="true"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("true", "order_schema_yml_by_name")}}
+                />
+                <Form.Check
+                  custom
+                  inline
+                  label="Add new records to the bottom, wherever they are"
+                  type='radio'
+                  id={'leave_yml_order_in_place'}
+                  checked={props.serverConfig.order_schema_yml_by_name==="false"}
+                  onClick={(e) => {e.stopPropagation(); updateServerConfigValue("false", "order_schema_yml_by_name")}}
+                />
+              </div>
+            </Form.Group>
           </Form>
         </Tab>
         {/* <Tab eventKey="password" title="Change Password" className="border-right border-left border-bottom p-3">

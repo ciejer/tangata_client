@@ -701,11 +701,20 @@ export default function Catalog (props) {
       }
       return 0;
     }
+    function sortByLabelChildren(a,b) {
+      if (a.label.props.children[0] > b.label.props.children[0]) {
+        return 1;
+      }
+      if (a.label.props.children[0] < b.label.props.children[0]) {
+        return -1;
+      }
+      return 0;
+    }
     items = items.sort((a, b) => sortByLabel(a,b));
     for(var itemDB in items) {
       items[itemDB].nodes = items[itemDB].nodes.sort((a, b) => sortByLabel(a,b));
       for(var itemDBSchema in items[itemDB].nodes) {
-        items[itemDB].nodes[itemDBSchema].nodes = items[itemDB].nodes[itemDBSchema].nodes.sort((a, b) => sortByLabel(a,b));
+        items[itemDB].nodes[itemDBSchema].nodes = items[itemDB].nodes[itemDBSchema].nodes.sort((a, b) => sortByLabelChildren(a,b));
       }
     }
     return(items);
