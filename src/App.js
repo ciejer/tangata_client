@@ -21,6 +21,7 @@ import { NavBar } from './components/NavBar';
 import Catalog from './components/Catalog';
 import { getSSH } from "./services/getSSH";
 import { getUserConfig } from "./services/getUserConfig";
+import { getHostVersion } from "./services/getHostVersion";
 import { getServerConfig } from "./services/getServerConfig";
 import { getGenerateSSH } from "./services/getGenerateSSH";
 import { getOpenGit } from "./services/getOpenGit";
@@ -34,28 +35,29 @@ class App extends Component {
     this.modelBuilder = React.createRef();
     var hostVersion = '';
     var tempUser = {};
-    if(window.location.port === '8080') { // python version
-      // console.log('python')
-      hostVersion = 'python'
-      tempUser = {"token":""}
-      console.log("Getting Server Config")
-      getServerConfig(tempUser)
-        .then(response => {
-          console.log("Received Server Config")
-          this.setState({"serverConfig": response})
-        });
-    } else {
-      // console.log('node')
-      hostVersion = 'node'
-      if(sessionStorage.getItem("user")) {
-        getUserConfig(JSON.parse(sessionStorage.getItem("user")).user)
-        .then(response => {
-          this.setState({"userConfig": response.user})
-        });
-        tempUser = JSON.parse(sessionStorage.getItem("user")).user;
-        
-      }
-    }
+    hostVersion = 'python'
+    tempUser = {"token":""}
+    getHostVersion(tempUser)
+      .then(response => {
+        this.setState({"hostVersion": response})
+        if(response === "python") {
+          console.log("Getting Server Config")
+          getServerConfig(tempUser)
+            .then(response => {
+              console.log("Received Server Config")
+              this.setState({"serverConfig": response})
+            });
+        } else {// console.log('node')
+          hostVersion = 'node'
+          if(sessionStorage.getItem("user")) {
+            getUserConfig(JSON.parse(sessionStorage.getItem("user")).user)
+            .then(response => {
+              this.setState({"userConfig": response.user})
+            });
+            tempUser = JSON.parse(sessionStorage.getItem("user")).user;
+          }
+        }
+      });
     document.title = 'Tāngata';
     this.state = {
       appState: "Catalog",
